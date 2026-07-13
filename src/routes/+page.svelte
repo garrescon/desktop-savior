@@ -1,13 +1,24 @@
 <script lang="ts">
+  import Sprite from "../lib/sprite/Sprite.svelte";
+  import { validateSheet, type AsepriteSheet } from "../lib/sprite/types";
 
+  let sheet = $state<AsepriteSheet | null>(null);
+  let tag = $state<string>('Loop');
+
+  async function load() {
+    const response = await fetch('/savior.json');
+    sheet = validateSheet(await response.json());
+  }
+  load();
 </script>
 
-<img
-  src="/savior.png"
-  alt="desktop pal"
-  draggable="false"
-  data-tauri-drag-region
-/>
+{#if sheet}
+  <div data-tauri-drag-region>
+    <Sprite src="/savior-sheet.png" {sheet} {tag} />
+  </div>
+{:else}
+  <p>broke</p>
+{/if}
 
 <style>
   :global(html),
@@ -15,11 +26,5 @@
     background: transparent;
     margin: 0;
     overflow: hidden;
-  }
-
-  img {
-    width: 200px;
-    height: 200px;
-    image-rendering: pixelated
   }
 </style>
