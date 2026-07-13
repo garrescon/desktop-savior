@@ -13,8 +13,14 @@
     "windows": [
       {
         "title": "desktop-savior",
-        "width": 800,
-        "height": 600
+        "width": 200,
+        "height": 200,
+        "transparent": true,
+        "decorations": false,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "skipTaskbar": true
       }
     ],
     "security": {
