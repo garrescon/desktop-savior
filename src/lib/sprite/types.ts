@@ -20,11 +20,12 @@ export interface FrameTag {
 export interface AsepriteSheet {
     frames: SpriteFrame[];
     meta: {
+        size: { w: number; h: number };
         frameTags: FrameTag[];
     }
 }
 
-export function validateSheet(data: unknown): AsepriteSheet {
+export function verifySheet(data: unknown): AsepriteSheet {
     const sheet = data as AsepriteSheet;
     if (!Array.isArray(sheet?.frames)) {
         throw new Error("Frames array is missing in spritesheet JSON, ensure Array is selected when exporting.");

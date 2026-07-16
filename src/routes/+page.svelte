@@ -1,23 +1,27 @@
 <script lang="ts">
-  import Sprite from "../lib/sprite/Sprite.svelte";
-  import { validateSheet, type AsepriteSheet } from "../lib/sprite/types";
+  import Savior from "../lib/behavior/Savior.svelte";
+  import { loadBehaviors, type Behavior } from "$lib/behavior/types";
+  import { behaviorDefs } from "$lib/behavior/behaviors";
 
-  let sheet = $state<AsepriteSheet | null>(null);
-  let tag = $state<string>('Loop');
-
+  let behaviors = $state<Behavior[] | null>(null);
+  let loadError = $state<string | null>(null);
+  
   async function load() {
-    const response = await fetch('/savior.json');
-    sheet = validateSheet(await response.json());
+    try {
+      behaviors = await loadBehaviors(behaviorDefs);
+    } catch (err) {
+      loadError = err instanceof Error ? err.message : String(err); 
+    }
   }
-  load();
+  load(); 
 </script>
 
-{#if sheet}
-  <div data-tauri-drag-region>
-    <Sprite src="/savior-sheet.png" {sheet} {tag} />
-  </div>
+{#if behaviors}
+  <Savior {behaviors} />
+{:else if loadError}
+  <p>{loadError}</p>
 {:else}
-  <p>broke</p>
+  <p>Loading...</p>
 {/if}
 
 <style>

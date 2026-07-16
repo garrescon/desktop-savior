@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "desktop-savior",
+        "title": "desktop-savior",  
         "width": 200,
         "height": 200,
         "transparent": true,

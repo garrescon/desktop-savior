@@ -1,51 +1,57 @@
 <script lang="ts">
-    import type { AsepriteSheet } from './types';
+    import type { AsepriteSheet, FrameTag } from './types';
 
     interface Props {
         src: string;
         sheet: AsepriteSheet;
-        tag: string;
+        tag: FrameTag;
+        scale?: number;
+        loop?: boolean;
+        onComplete?: () => void;
     }
 
-    let { src, sheet, tag }: Props = $props();
+    let { src, sheet, tag, scale = 4, loop = true, onComplete }: Props = $props();
 
     let frameIndex = $state(0);
 
-    const activeTag = $derived(sheet.meta.frameTags.find((t) => t.name === tag));
-    const frame = $derived(sheet.frames[frameIndex].frame);
+    const frame = $derived((sheet.frames[frameIndex] ?? sheet.frames[0]).frame);
 
     $effect(() => {
-        if (!activeTag) {
-            console.error(`"${tag}" isn't in spritesheet tags`);
-            return;
-        }
-
-        const { from, to } = activeTag;
+        const { from, to } = tag;
         frameIndex = from;
 
         let elapsed = 0;
         let last = performance.now();
         let rafId = requestAnimationFrame(function tick(now) {
-            elapsed += now - last;
+            elapsed += Math.min(now - last, 100);
             last = now;
-            if (elapsed >= sheet.frames[frameIndex].duration) {
-                elapsed -= sheet.frames[frameIndex].duration;
-                // Loop back to the start of the tag if we reach the end
-                frameIndex = frameIndex >= to ? from : frameIndex + 1;
+            const duration = sheet.frames[frameIndex].duration;
+            if (elapsed >= duration) {
+                elapsed -= duration;
+                if (frameIndex >= to ) {
+                    if (!loop) {
+                        onComplete?.();
+                        return;
+                    }
+                    frameIndex = from;
+                } else {
+                    frameIndex++;
+                }
             }
             rafId = requestAnimationFrame(tick);
         });
-        
+
         return () => cancelAnimationFrame(rafId);
     });
 </script>
 
 <div
     data-tauri-drag-region
-    style:width="{frame.w}px"
-    style:height="{frame.h}px"
+    style:width="{frame.w * scale}px"
+    style:height="{frame.h * scale}px"
     style:background-image="url({src})"
-    style:background-position="{-frame.x}px {-frame.y}px"
+    style:background-size="{sheet.meta.size.w * scale}px {sheet.meta.size.h * scale}px"
+    style:background-position="{-frame.x * scale}px {-frame.y * scale}px"
 ></div>
 
 <style>
