@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "desktop-savior",  
+        "title": "Desktop Savior",  
         "width": 200,
         "height": 200,
         "transparent": true,
@@ -21,6 +21,13 @@
         "alwaysOnTop": true,
         "resizable": false,
         "skipTaskbar": true
+      },
+      {
+        "label": "companion",
+        "title": "Desktop Savior: Life Companion",
+        "url": "/companion",
+        "width": 400,
+        "height": 600
       }
     ],
     "security": {

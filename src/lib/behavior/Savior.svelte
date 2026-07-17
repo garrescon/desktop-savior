@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { listen } from "@tauri-apps/api/event";
     import Sprite from "$lib/sprite/Sprite.svelte";
     import type { Behavior } from "./types";
     import { pickWeighted } from "./random";
@@ -29,11 +30,15 @@
         } else if (segment === "loop" && behavior.outro) {
             segment = "outro";
         } else {
-            const next = pickWeighted(behaviors, (b) => b.weight);
-            generation++;
-            behavior = next;
-            segment = next.intro ? "intro" : "loop";
+            startNextBehavior();
         }
+    }
+
+    function startNextBehavior() {
+        const next = pickWeighted(behaviors, (b) => b.weight);
+        behavior = next;
+        segment = next.intro ? "intro" : "loop";
+        generation++;
     }
 
     $effect(() => {
