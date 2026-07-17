@@ -2,7 +2,7 @@
   import Savior from "$lib/behavior/Savior.svelte";
   import { loadBehaviors, type Behavior } from "$lib/behavior/types";
   import { behaviorDefs } from "$lib/behavior/behaviors";
-
+  
   let behaviors = $state<Behavior[] | null>(null);
   let loadError = $state<string | null>(null);
   

@@ -8,7 +8,7 @@ export function pickWeighted<T>(items: readonly T[], getWeight: (item: T) => num
     );
 
     let draw = Math.random() * total;
-    if (items.length <= 0) {
+    if (total <= 0) {
         throw new Error("pickWeighted found that all weights are 0")
     }
 

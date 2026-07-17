@@ -1,23 +1,14 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-use rand::RngExt;
-
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+mod gloo;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    dotenvy::dotenv().ok();
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, roll_dice, get_app_version])
+        .invoke_handler(tauri::generate_handler![get_app_version, gloo::ask_gloo])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-#[tauri::command]
-fn roll_dice(sides: u32) -> u32 {
-    rand::rng().random_range(1..=sides)
 }
 
 #[tauri::command]

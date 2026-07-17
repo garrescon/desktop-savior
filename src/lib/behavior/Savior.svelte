@@ -3,7 +3,7 @@
     import Sprite from "$lib/sprite/Sprite.svelte";
     import type { Behavior } from "./types";
     import { pickWeighted } from "./random";
-
+    
     let { behaviors }: { behaviors: Behavior[] } = $props();
     let generation = $state(0);
 
