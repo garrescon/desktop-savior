@@ -36,11 +36,19 @@
   <button onclick={() => ask(feeling)} disabled={asking}>{feeling}</button>
 {/each}
 
+
+
 {#if note}<p><em>{note}</em></p>{/if}
+
 {#each passages as p}
   <blockquote>
     <p>{p.text}</p>
     <footer>{p.reference} ({p.versionTitle}) <small>{p.copyright}</small></footer>
   </blockquote>
 {/each}
-{#if askError}<p>Something went wrong: {askError}</p>{/if}
+
+{#if asking}<p>Finding verses…</p>{/if}
+
+{#if askError}
+    <p>Couldn't reach the library, try again later!</p>
+{/if}

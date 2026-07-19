@@ -4,11 +4,13 @@ export type Termination =
     | { kind: "animationEnd" }
     | { kind: "duration"; minMs: number; maxMs: number };
 
+export type Movement = { kind: "walk"; speed: number }
 
 export interface BehaviorDef {
     id: string;
     weight: number;
     termination: Termination;
+    movement?: Movement
 }
 
 export interface Behavior extends BehaviorDef {

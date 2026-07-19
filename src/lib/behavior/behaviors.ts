@@ -5,6 +5,7 @@ export const behaviorDefs: BehaviorDef[] = [
         termination:{ kind: "duration", minMs: 5000, maxMs: 10000 } },
 
     { id: "savior-generic-walk", weight: 10,
+        movement:{kind: "walk", speed: 60 },
         termination: { kind: "duration", minMs: 5000, maxMs: 10000 } },
 
     { id: "savior-oneshot-blink", weight: 10,

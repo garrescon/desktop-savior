@@ -7,10 +7,11 @@
         tag: FrameTag;
         scale?: number;
         loop?: boolean;
+        flip?: boolean;
         onComplete?: () => void;
     }
 
-    let { src, sheet, tag, scale = 4, loop = true, onComplete }: Props = $props();
+    let { src, sheet, tag, scale = 4, loop = true, onComplete, flip = false      }: Props = $props();
 
     let frameIndex = $state(0);
 
@@ -52,6 +53,7 @@
     style:background-image="url({src})"
     style:background-size="{sheet.meta.size.w * scale}px {sheet.meta.size.h * scale}px"
     style:background-position="{-frame.x * scale}px {-frame.y * scale}px"
+    style:transform="scaleX({flip ? -1 : 1})"
 ></div>
 
 <style>

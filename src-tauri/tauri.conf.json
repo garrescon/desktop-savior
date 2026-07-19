@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Desktop Savior",  
-        "width": 200,
-        "height": 200,
+        "width": 280,
+        "height": 360,
         "transparent": true,
         "decorations": false,
         "shadow": false,
