@@ -1,6 +1,6 @@
 export function pickWeighted<T>(items: readonly T[], getWeight: (item: T) => number): T {
     if (items.length === 0) {
-        throw new Error("pickWeighted got an empty behavior list")
+        throw new Error("Behavior config error: pickWeighted got an empty behavior list")
     }
     
     const total = items.reduce(
@@ -9,10 +9,9 @@ export function pickWeighted<T>(items: readonly T[], getWeight: (item: T) => num
 
     let draw = Math.random() * total;
     if (total <= 0) {
-        throw new Error("pickWeighted found that all weights are 0")
+        throw new Error("Behavior config error: pickWeighted found that all weights are 0")
     }
-
-    // Iterate through the items and subtract their weights from the draw value until we find the selected item
+    
     for (const item of items) {
         draw -= getWeight(item);
         if (draw < 0) return item;

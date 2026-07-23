@@ -7,6 +7,8 @@
     let { behaviors, onStash }: { behaviors: Behavior[], onStash?: () => void } = $props();
     let generation = $state(0);
     let facing = $state<1 | -1>(1);
+    // true while someone else owns the window position (dragging or mid-fall)
+    // timer and walk effects pause on it
     let suspended = $state(false);
 
     type Segment = "intro" | "loop" | "outro";
@@ -49,6 +51,7 @@
         generation++;
     }
 
+    // any click interrupts a walk
     const endWalk = () => startNextBehavior(behaviors.filter((b) => !b.movement));
 
     $effect(() => {
@@ -64,6 +67,8 @@
 
     $effect(() => {
         if (suspended) return
+        // forces generation to be a dependancy
+        // without it, same behavior twice leaves behavior and segment unchanged
         void generation;
         if (segment !== "loop" || behavior.termination.kind !== "duration") return;
         const { minMs, maxMs } = behavior.termination;
@@ -131,16 +136,27 @@
         let rafId = 0;
         let quietTimer: ReturnType<typeof setTimeout>;
         let unlisten: (() => void) | undefined;
+        let removeGrab: (() => void) | undefined;
 
         const G = 3000;
         const BOUNCE = 0.25;
+        // a drag has ended when window moves stop arriving for this long
+        const QUIESCENCE_MS = 450;
+        // landings slower than this don't bounce
+        const BOUNCE_MIN_SPEED = 400;
 
         (async () => {
             const [monitor, size] = await Promise.all([currentMonitor(), win.outerSize()]);
             if (disposed || !monitor) return;
             const area = monitor.workArea;
             const floorY = area.position.y + area.size.height - size.height;
-
+            
+            // Suspends behavior state while above floor level until
+            // the window lands, is grabbed, or is stashed
+            //
+            // Deliberately doesn't check suspended first. Windows doesn't
+            // give pointerup after dragging ends(?) so the flag can be stuck true.
+            // Landing and floor quiescence are reset points.
             async function maybeFall() {
                 if (disposed) return;
                 dlog(`[gravity] maybeFall check (suspended=${suspended})`);
@@ -171,6 +187,9 @@
                 let grabbed = false;
                 const grab = () => { grabbed = true; };
                 window.addEventListener("pointerdown", grab, { once: true });
+                // Gives the effect teardown a way to unhook grab if the compoonent dies
+                // mid-fall. once:true only fires if a click happens
+                removeGrab = () => window.removeEventListener("pointerdown", grab);
 
                 const step = (now: number) => {
                     if (disposed || grabbed) return;
@@ -180,7 +199,7 @@
                     y += vy * dt;
                     if (y >= floorY) {
                         y = floorY;
-                        if (vy > 400 && BOUNCE > 0) {
+                        if (vy > BOUNCE_MIN_SPEED && BOUNCE > 0) {
                             vy = -vy * BOUNCE;
                         } else {
                             win.setPosition(new PhysicalPosition(pos.x, floorY)).catch(console.warn);
@@ -196,10 +215,14 @@
                 rafId = requestAnimationFrame(step);
             }
 
-            unlisten = await win.onMoved(() => {
+            const fn = await win.onMoved(() => {
                 clearTimeout(quietTimer);
-                quietTimer = setTimeout(maybeFall, 250);
+                quietTimer = setTimeout(() => { maybeFall().catch(console.warn); }, QUIESCENCE_MS);
             });
+            if (disposed) { fn(); return; }
+            unlisten = fn;
+
+            maybeFall().catch(console.warn);
         })().catch(console.warn);
 
         return () => {
@@ -207,6 +230,7 @@
             cancelAnimationFrame(rafId);
             clearTimeout(quietTimer);
             unlisten?.();
+            removeGrab?.();
         };
     });
 

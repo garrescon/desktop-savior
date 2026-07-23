@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core"
+    import { emit } from "@tauri-apps/api/event";
+    import { invoke } from "@tauri-apps/api/core";
     import { getPassage, type Passage } from "$lib/youversion/api";
-    
+    import { REMINDERS } from "$lib/reminder/themes";
+
+    // keep in sync with Guidance struct in src-tauri/src/gloo.rs
     interface Guidance { references: string[]; note: string; }
 
     const FEELINGS = [
@@ -29,7 +32,6 @@
             asking = false;
         }
     }
-
 </script>
 
 {#each FEELINGS as feeling}
@@ -52,3 +54,10 @@
 {#if askError}
     <p>Couldn't reach the library, try again later!</p>
 {/if}
+
+<h2>Remind me of His...</h2>
+{#each Object.entries(REMINDERS) as [theme, def]}
+  <button onclick={() => emit("reminder", theme).catch(console.warn)}>
+    {def.label}
+  </button>
+{/each}

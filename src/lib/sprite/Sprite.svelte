@@ -11,10 +11,12 @@
         onComplete?: () => void;
     }
 
-    let { src, sheet, tag, scale = 4, loop = true, onComplete, flip = false      }: Props = $props();
+    let { src, sheet, tag, scale = 4, loop = true, onComplete, flip = false }: Props = $props();
 
     let frameIndex = $state(0);
 
+    // ?? guards the render between a sheet swap and the effect resetting
+    // frameIndex, when the old index can point past the new sheet's frames
     const frame = $derived((sheet.frames[frameIndex] ?? sheet.frames[0]).frame);
 
     $effect(() => {
@@ -28,6 +30,8 @@
             last = now;
             const duration = sheet.frames[frameIndex].duration;
             if (elapsed >= duration) {
+                // the remainder carries into the next frame so
+                // timing doesn't drift against the sheet
                 elapsed -= duration;
                 if (frameIndex >= to ) {
                     if (!loop) {

@@ -33,8 +33,9 @@ export async function loadBehaviors(defs: BehaviorDef[]): Promise<Behavior[]> {
         const sheet = verifySheet(await response.json());
         const tags = new Map(sheet.meta.frameTags.map((t) => [t.name, t]));
 
-        // No tags, mark the whole animation as the loop
-        // Any tags, loop must be already assigned
+        // tagged needs "loop", optional "intro"/"outro"
+        // no tags, mark the whole animation as the loop
+        // any tags, loop must be already assigned
         let loop = tags.get("loop");
         if (!loop) {
             if (tags.size > 0) {
