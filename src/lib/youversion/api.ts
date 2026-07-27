@@ -11,6 +11,7 @@ export const VERSION_ID = 111;
 const bible = new BibleClient(new ApiClient({ appKey: APP_KEY }));
 
 export function dayOfYear(d = new Date()): number {
+    // day-zero of January (Dec 31) as the origin makes Jan 1 come out as day 1
     const startOfYear = Date.UTC(d.getUTCFullYear(), 0, 0);
     const today = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
     return Math.floor((today - startOfYear) / 86_400_000);
@@ -39,6 +40,29 @@ export async function getPassage(usfm: string): Promise<Passage> {
         versionTitle: version.localized_title,
         copyright: version.copyright ?? `© ${version.title}`,
     };
+}
+
+export interface ChapterLength {
+    chapter: number;
+    verses: number;
+}
+
+// one request covers a whole book and the promise is cached
+const chapterPromises = new Map<string, Promise<ChapterLength[]>>();
+export function getChapterLengths(book: string): Promise<ChapterLength[]> {
+    let promise = chapterPromises.get(book);
+    if (!promise) {
+        promise = bible.getChapters(VERSION_ID, book).then((chapters) =>
+            chapters.data.map((c) => ({
+                chapter: Number(c.id),
+                verses: c.verses?.length ?? 0,
+            })),
+        );
+        // if it fails, wipe it to try again
+        promise.catch(() => chapterPromises.delete(book));
+        chapterPromises.set(book, promise);
+    }
+    return promise;
 }
 
 export async function getVerseOfTheDay(): Promise<Passage> {

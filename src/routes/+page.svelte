@@ -6,6 +6,7 @@
   import { behaviorDefs } from "$lib/behavior/behaviors";
   import { getVerseOfTheDay, getPassage, type Passage } from "$lib/youversion/api";
   import { REMINDERS, type ReminderTheme } from "$lib/reminder/themes";
+  import { DEMO_MODE } from "$lib/dev";
 
   import Savior from "$lib/behavior/Savior.svelte";
   import Stash from "$lib/behavior/Stash.svelte";
@@ -13,10 +14,8 @@
   import ReminderMoment from "$lib/reminder/ReminderMoment.svelte"
 
 
-  // TODO: flip to false
-  const DEV = true;
-  const QUIET_MIN_MS = DEV ? 15_000 : 2 * 60 * 60 * 1000;
-  const QUIET_MAX_MS = DEV ? 25_000 : 3 * 60 * 60 * 1000;
+  const QUIET_MIN_MS = DEMO_MODE ? 15_000 : 2 * 60 * 60 * 1000;
+  const QUIET_MAX_MS = DEMO_MODE ? 25_000 : 3 * 60 * 60 * 1000;
   const STASH_PX = 72;
   const UNSTASHED_W = 280, UNSTASHED_H = 360;
   const REMINDER_W = 400, REMINDER_H = 560;
@@ -42,11 +41,11 @@
     mode = "active";
   }
 
-  async function load() {
+  async function loadBehaviorAssets() {
     try {
       behaviors = await loadBehaviors(behaviorDefs);
     } catch (err) {
-      loadError = err instanceof Error ? err.message : String(err); 
+      loadError = err instanceof Error ? err.message : String(err);
     }
   }
 
@@ -88,6 +87,7 @@
         console.warn("unknown reminder theme:", e.payload);
         return;
       }
+      if (!reminderVerses[e.payload as ReminderTheme]?.length) loadReminderVerses();
       bubble = null;
       reminderTheme = e.payload as ReminderTheme;
       mode = "reminder";
@@ -149,7 +149,8 @@
       
     return () => { disposed = true; }
   });
-  load();
+  // startup
+  loadBehaviorAssets();
   loadReminderVerses();
 
   async function loadReminderVerses() {

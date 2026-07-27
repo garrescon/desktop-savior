@@ -3,6 +3,7 @@
     import Sprite from "$lib/sprite/Sprite.svelte";
     import type { Behavior } from "./types";
     import { pickWeighted } from "./random";
+    import { DEBUG } from "$lib/dev";
     
     let { behaviors, onStash }: { behaviors: Behavior[], onStash?: () => void } = $props();
     let generation = $state(0);
@@ -13,7 +14,6 @@
 
     type Segment = "intro" | "loop" | "outro";
 
-    const DEBUG = true;
     const t = () => (performance.now() / 1000).toFixed(2);
     const dlog = (msg: string) => { if (DEBUG) console.log(`${t()} ${msg}`); };
     const win = getCurrentWindow();
@@ -51,7 +51,7 @@
         generation++;
     }
 
-    // any click interrupts a walk
+    // any click interrupts a walk - restarts into a non-movement behavior
     const endWalk = () => startNextBehavior(behaviors.filter((b) => !b.movement));
 
     $effect(() => {
@@ -67,7 +67,7 @@
 
     $effect(() => {
         if (suspended) return
-        // forces generation to be a dependancy
+        // forces generation to be a dependency
         // without it, same behavior twice leaves behavior and segment unchanged
         void generation;
         if (segment !== "loop" || behavior.termination.kind !== "duration") return;
@@ -155,7 +155,7 @@
             // the window lands, is grabbed, or is stashed
             //
             // Deliberately doesn't check suspended first. Windows doesn't
-            // give pointerup after dragging ends(?) so the flag can be stuck true.
+            // give pointerup after dragging ends so the flag can be stuck true.
             // Landing and floor quiescence are reset points.
             async function maybeFall() {
                 if (disposed) return;
@@ -187,7 +187,7 @@
                 let grabbed = false;
                 const grab = () => { grabbed = true; };
                 window.addEventListener("pointerdown", grab, { once: true });
-                // Gives the effect teardown a way to unhook grab if the compoonent dies
+                // Gives the effect teardown a way to unhook grab if the component dies
                 // mid-fall. once:true only fires if a click happens
                 removeGrab = () => window.removeEventListener("pointerdown", grab);
 

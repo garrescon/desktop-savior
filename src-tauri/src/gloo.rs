@@ -118,6 +118,7 @@ pub async fn ask_gloo(feelings: Vec<String>) -> Result<Guidance, String> {
         .map(|c| c.message.content.as_str())
         .ok_or("completions returned no choices".to_string())?;
 
+    // cleans markdown-wrapped json
     let cleaned = text
         .trim()
         .trim_start_matches("```json")

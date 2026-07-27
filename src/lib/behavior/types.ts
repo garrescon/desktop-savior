@@ -44,7 +44,7 @@ export async function loadBehaviors(defs: BehaviorDef[]): Promise<Behavior[]> {
             }
             
             loop = { name: "loop", from: 0, to: sheet.frames.length - 1, direction: "forward" };
-        };
+        }
         
         return {
             ...def,

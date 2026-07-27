@@ -3,14 +3,21 @@ mod gloo;
 
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
-    Manager,
+    tray::TrayIconBuilder
 };
 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    dotenvy::dotenv().ok();
+    
+    let from_exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|dir| dir.join(".env")))
+        .and_then(|path| dotenvy::from_path(&path).ok());
+
+    if from_exe_dir.is_none() {
+        dotenvy::dotenv().ok();
+    }
 
     tauri::Builder::default()
         .setup(|app| {
@@ -39,3 +46,4 @@ pub fn run() {
 fn get_app_version(app: tauri::AppHandle) -> String {
     app.package_info().version.to_string()
 }
+
