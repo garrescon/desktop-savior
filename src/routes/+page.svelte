@@ -1,17 +1,20 @@
 <script lang="ts">
   import { getCurrentWindow, currentMonitor, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
-  import { listen } from "@tauri-apps/api/event";
+  import { listen, emit } from "@tauri-apps/api/event";
 
   import { loadBehaviors, type Behavior } from "$lib/behavior/types";
   import { behaviorDefs } from "$lib/behavior/behaviors";
+  import "$lib/styles/tokens.css";
   import { getVerseOfTheDay, getPassage, type Passage } from "$lib/youversion/api";
   import { REMINDERS, type ReminderTheme } from "$lib/reminder/themes";
+  import { dayKey, loadLog, saveLog, loadSettings, addSeconds } from "$lib/day/progress";
   import { DEMO_MODE } from "$lib/dev";
 
   import Savior from "$lib/behavior/Savior.svelte";
   import Stash from "$lib/behavior/Stash.svelte";
   import Bubble from "$lib/effects/Bubble.svelte"
   import ReminderMoment from "$lib/reminder/ReminderMoment.svelte"
+  import PraySession from "$lib/day/PraySession.svelte"
 
 
   const QUIET_MIN_MS = DEMO_MODE ? 15_000 : 2 * 60 * 60 * 1000;
@@ -19,10 +22,12 @@
   const STASH_PX = 72;
   const UNSTASHED_W = 280, UNSTASHED_H = 360;
   const REMINDER_W = 400, REMINDER_H = 560;
+  const PRAYER_W = 400, PRAYER_H = 560;
 
-  type Mode = "active" | "stashed" | "reminder";
+  type Mode = "active" | "stashed" | "reminder" | "praying";
   let mode = $state<Mode>("active");
   let reminderTheme = $state<ReminderTheme>("love");
+  let prayerGoal = $state(0);
   // false while a mode change is resizing/moving the window
   // anything that uses geometry obeys it
   let geometryReady = $state(false);
@@ -38,6 +43,15 @@
   }
   
   function restore() {
+    mode = "active";
+  }
+
+  function finishPrayer(seconds: number) {
+    if (seconds > 0) {
+      saveLog(addSeconds(loadLog(), dayKey(), seconds));
+      // the companion holds its own copy and has no way to know
+      emit("prayed", seconds).catch(console.warn);
+    }
     mode = "active";
   }
 
@@ -102,6 +116,26 @@
     };
   });
 
+  // prayer listener,the goal is read off disk so there's no conflict
+  $effect(() => {
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+
+    listen("pray", () => {
+      prayerGoal = loadSettings().prayerMinutes * 60;
+      bubble = null;
+      mode = "praying";
+    }).then((fn) => {
+      if (disposed) { fn(); return; }
+      unlisten = fn;
+    }).catch(console.warn);
+
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  });
+
   // window geometry management
   $effect(() => {
     const m = mode;
@@ -139,6 +173,14 @@
             area.position.y + area.size.height - REMINDER_H,
           ));
           break;
+        case "praying":
+          await win.setSize(new PhysicalSize(PRAYER_W, PRAYER_H));
+          if (disposed) return;
+          await win.setPosition(new PhysicalPosition(
+            area.position.x + Math.round((area.size.width - PRAYER_W) / 2),
+            area.position.y + area.size.height - PRAYER_H,
+          ));
+          break;
         default:
           m satisfies never;
       }
@@ -169,6 +211,14 @@
 <main>
   {#if mode === "stashed"}
     <Stash onRestore={restore} />
+  {:else if mode === "praying"}
+    {#if geometryReady}
+      <PraySession
+        behavior={behaviors?.find((b) => b.id === "savior-generic-idle") ?? null}
+        goalSeconds={prayerGoal}
+        onDone={finishPrayer}
+      />
+    {/if}
   {:else if mode === "reminder"}
     {#if geometryReady}
       <ReminderMoment

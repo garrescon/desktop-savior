@@ -1,4 +1,5 @@
 import type { ChapterLength } from "$lib/youversion/api";
+import { load, save, clamp, whole } from "$lib/store";
 
 export const PLAN_BOOK = "LUK";
 export const PLAN_BOOK_NAME = "Luke";
@@ -9,62 +10,38 @@ export const MIN_PACE = 1, MAX_PACE = 40, DEFAULT_PACE = 10;
 export interface Plan {
     versesRead: number;
     pace: number;
-    // what the last mark added, so undo stays correct after a pace change
-    lastRead: { day: string; count: number } | null;
 }
 
 const STORAGE_KEY = "desktop-savior:reading";
 
 // TODO: no way to start over. Luke can only be read once in your life. Memorize it well.
 
-function clampPace(n: number): number {
-    return Math.min(MAX_PACE, Math.max(MIN_PACE, Math.round(n)));
-}
-
 function defaultPlan(): Plan {
-    return { versesRead: 0, pace: DEFAULT_PACE, lastRead: null };
+    return { versesRead: 0, pace: DEFAULT_PACE };
 }
 
 export function loadPlan(): Plan {
-    const plan = defaultPlan();
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (!stored) return plan;
-
-        const parsed = JSON.parse(stored) as Partial<Plan>;
+    return load(STORAGE_KEY, (raw) => {
+        const parsed = raw as Partial<Plan>;
+        const plan = defaultPlan();
         // clamp rather than reject
-        if (Number.isFinite(parsed?.versesRead)) plan.versesRead = Math.max(0, Math.floor(parsed!.versesRead!));
-        if (Number.isFinite(parsed?.pace)) plan.pace = clampPace(parsed!.pace!);
-
-        const last = parsed?.lastRead;
-        if (last && typeof last.day === "string" && Number.isFinite(last.count)) {
-            plan.lastRead = { day: last.day, count: Math.max(0, Math.floor(last.count)) };
-        }
-    } catch {
-        // start the plan over rather than break
-    }
-    return plan;
+        plan.versesRead = whole(parsed?.versesRead);
+        if (Number.isFinite(parsed?.pace)) plan.pace = clamp(parsed!.pace!, MIN_PACE, MAX_PACE);
+        return plan;
+    }, defaultPlan);
 }
 
 export function savePlan(plan: Plan): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
+    save(STORAGE_KEY, plan);
 }
 
 export function setPace(plan: Plan, delta: number): Plan {
-    return { ...plan, pace: clampPace(plan.pace + delta) };
+    return { ...plan, pace: clamp(plan.pace + delta, MIN_PACE, MAX_PACE) };
 }
 
-export function markRead(plan: Plan, day: string, count: number): Plan {
-    return { ...plan, versesRead: plan.versesRead + count, lastRead: { day, count } };
-}
-
-export function undoRead(plan: Plan): Plan {
-    if (!plan.lastRead) return plan;
-    return {
-        ...plan,
-        versesRead: Math.max(0, plan.versesRead - plan.lastRead.count),
-        lastRead: null,
-    };
+// bookmark moves by whatever today's count moved by
+export function advance(plan: Plan, delta: number, total: number): Plan {
+    return { ...plan, versesRead: Math.max(0, Math.min(total, plan.versesRead + delta)) };
 }
 
 export function totalVerses(lengths: ChapterLength[]): number {

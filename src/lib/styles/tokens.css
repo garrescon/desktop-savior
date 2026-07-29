@@ -1,0 +1,41 @@
+:root {
+    /* -- PALLETE --
+       walnut = fill, glyphs, body text;
+       mustard = rules and the small things;
+       maroon = live things;
+       green = Feelings to Verses */
+    --paper: #ece1c9;      /* the window itself                       */
+    --surface: #fbf7ec;    /* plates and pills sit on this            */
+    --walnut: #4e3629;
+    --cream: #f1e7d2;      /* type on walnut/green                    */
+    --mustard: #8c6b2f;
+    --maroon: #800000;
+    --green: #384e36;
+
+    /* the same colours as rgb, so tints can be mixed */
+    --ink: 78, 54, 41;     /* walnut  */
+    --gold: 140, 107, 47;  /* mustard */
+    --red: 128, 0, 0;      /* maroon  */
+
+    --display: "Cormorant Garamond", Georgia, serif;
+    --body: Lora, Georgia, "Times New Roman", serif;
+
+    /* ledger margin */
+    --margin: 38px;
+    --pad: 26px;
+
+    /* hairlines */
+    --hair: rgba(78, 54, 41, 0.13);
+    --hair-firm: rgba(78, 54, 41, 0.25);
+    --hair-gold: rgba(140, 107, 47, 0.5);
+
+    /* reading stepper & prayer button size */
+    --ticker: 98px;
+
+    /* attempted measurement standardization */
+    --head-gap: 14px;   /* head to the control row */
+    --row-gap: 22px;    /* control row to the meter */
+
+
+    --tick: 140ms;
+}

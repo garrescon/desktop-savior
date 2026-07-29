@@ -1,0 +1,141 @@
+@import "./tokens.css";
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--walnut);
+    font-family: var(--body);
+}
+
+/* --- labels --- */
+
+/* names a section */
+.eyebrow {
+    font: 400 10px/1 var(--body);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mustard);
+}
+
+/* names something inside a section */
+.sublabel {
+    font: 400 9.5px/1 var(--body);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mustard);
+}
+
+.numeral { font-variant-numeric: tabular-nums; }
+
+/* --- labels with a rule --- */
+
+.rule-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+/* section heads and the sub-heads draw the same line */
+.rule {
+    flex: 1;
+    height: 1px;
+    background: var(--hair-firm);
+}
+
+/* --- the hairline box that adjusts a number --- */
+
+.stepper {
+    flex: none;
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--hair-firm);
+}
+.stepper button {
+    width: 25px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font: 400 14px/1 var(--body);
+    color: var(--walnut);
+    transition: background-color var(--tick) ease;
+}
+.stepper button:first-child { border-right: 1px solid rgba(var(--ink), 0.2); }
+.stepper button:last-child { border-left: 1px solid rgba(var(--ink), 0.2); }
+.stepper button:hover:not(:disabled) { background: rgba(var(--gold), 0.1); }
+.stepper button:disabled { color: rgba(var(--ink), 0.28); cursor: default; }
+.stepper span {
+    padding: 8px 9px;
+    white-space: nowrap;
+    font: 400 10.5px/1 var(--body);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--walnut);
+    font-variant-numeric: tabular-nums;
+}
+
+/* same as above but can be typed into */
+.stepper input {
+    width: 5ch;
+    padding: 8px 9px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font: 400 10.5px/1 var(--body);
+    letter-spacing: 0.08em;
+    color: var(--walnut);
+    font-variant-numeric: tabular-nums;
+}
+/* the field sits flush inside the stepper's border */
+.stepper input:focus-visible {
+    outline: 1px solid var(--mustard);
+    outline-offset: -3px;
+}
+
+/* --- the hairline progress bar --- */
+
+.meter {
+    height: 3px;
+    background: var(--hair);
+    position: relative;
+}
+.meter-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: var(--mustard);
+    transition: width 200ms ease;
+}
+
+/* --- the double-framed card --- */
+
+.plate {
+    padding: 6px;
+    background: var(--surface);
+    border: 1px solid rgba(var(--gold), 0.55);
+}
+.plate-frame {
+    border: 1px solid rgba(var(--gold), 0.35);
+    padding: 18px 18px 17px;
+}
+
+/* --- focus ring for each --- */
+
+/* :where() keeps this at zero specificity, so any component that needs a
+   different offset just writes its own rule and wins */
+:where(button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 1px solid var(--mustard);
+    outline-offset: 2px;
+}
+
+/* --- reduced motion support --- */
+
+/* Svelte's own fade is JS-driven, the companion
+   handles that separately in fadeMs */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

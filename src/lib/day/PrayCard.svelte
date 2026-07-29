@@ -1,0 +1,91 @@
+<script lang="ts">
+    import type { Ring } from "./progress";
+
+    let { ring, onBegin }: {
+        ring: Ring;             // seconds today against the daily goal
+        onBegin: () => void;
+    } = $props();
+
+    const goalMinutes = $derived(Math.round(ring.goal / 60));
+
+    const CONFIRM_MS = 4000;
+    let begunAt = $state(0);
+    const confirming = $derived(begunAt !== 0);
+
+    function begin() {
+        begunAt = Date.now();           // a new stamp re-arms the timer below
+        onBegin();
+    }
+
+    // clears itself
+    $effect(() => {
+        if (!begunAt) return;
+        const id = setTimeout(() => (begunAt = 0), CONFIRM_MS);
+        return () => clearTimeout(id);
+    });
+</script>
+
+<div class="pray">
+    <div class="pray-head">
+        <div class="pray-goal">{goalMinutes} [minutes a day]</div>
+        <button class="pray-begin" onclick={begin}>
+            {confirming ? "[begun in His window]" : "[begin] →"}
+        </button>
+    </div>
+
+    <div class="meter"><div class="meter-fill" style="width: {ring.fraction * 100}%"></div></div>
+
+    {#if ring.complete}
+        <p class="pray-note">[you sat the whole while today]</p>
+    {/if}
+</div>
+
+<style>
+    /* The gap above comes from .section's head rule and the one below the
+       control row from --row-gap */
+    .pray {
+        padding-bottom: 20px;
+    }
+
+    /* centered, not baseline-aligned 
+       Ghe display face has descenders that hang below the button's bottom
+       edge when the two are bottom-aligned */
+    .pray-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: var(--row-gap);
+    }
+    .pray-goal {
+        font: 400 28px/1 var(--display);
+        font-variant-numeric: tabular-nums;
+        color: var(--walnut);
+    }
+
+    /* same size as the reading stepper */
+    .pray-begin {
+        flex: none;
+        width: var(--ticker);
+        white-space: nowrap;
+        padding: 10px 13px;
+        background: transparent;
+        color: var(--maroon);
+        border: 1px solid var(--maroon);
+        font: 400 10px/1 var(--body);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background-color var(--tick) ease;
+    }
+    .pray-begin:hover { background: rgba(var(--red), 0.07); }
+
+    .meter :global(.meter-fill) { background: var(--maroon); }
+
+    .pray-note {
+        margin: 9px 0 0;
+        font: italic 400 12px/1.5 var(--body);
+        color: rgba(var(--ink), 0.5);
+        text-wrap: pretty;
+    }
+</style>
