@@ -1,6 +1,8 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
-    import { getPassage, type Passage } from "$lib/youversion/api";
+    import { getPassage } from "$lib/youversion/api";
+    import Passages, { type Entry } from "$lib/shelf/Passages.svelte";
+    import { loadShelf, saveShelf, keep, isKept } from "$lib/shelf/shelf";
 
     // keep in sync with Guidance struct in src-tauri/src/gloo.rs
     interface Guidance { references: string[]; note: string; }
@@ -13,15 +15,12 @@
     // this component is unmounted on exit so it clears
     let selected = $state<string[]>([]);
     let note = $state<string | null>(null);
-    let passages = $state<Passage[]>([]);
-    let shownIndex = $state(0);
+    let entries = $state<Entry[]>([]);
     let asking = $state(false);
     let askError = $state<string | null>(null);
 
-    const shown = $derived(passages[shownIndex] ?? null);
-    const shelf = $derived(
-        passages.map((p, i) => ({ p, i })).filter(({ i }) => i !== shownIndex),
-    );
+    // so a passage already kept says so rather than offering to keep it twice
+    let shelf = $state(loadShelf());
 
     const prompt = $derived(
         selected.length
@@ -35,35 +34,40 @@
             : [...selected, feeling];
     }
 
-    // one line per row
-    // end on the first punctuation available if it's too long
-    function snippet(text: string): string {
-        const cut = text.search(/[,;:.]/);
-        const head = cut > 24 ? text.slice(0, cut) : text;
-        return head.length > 44 ? `${head.slice(0, 44).trimEnd()}…` : head;
+    // re-reads first — the book tab writes this same shelf
+    function keepIt(entry: Entry) {
+        shelf = keep(loadShelf(), entry.usfm, entry);
+        saveShelf(shelf);
     }
 
     async function ask() {
         asking = true;
         askError = null;
         note = null;
-        passages = [];
-        shownIndex = 0;
+        entries = [];
         try {
             const guidance = await invoke<Guidance>("ask_gloo", { feelings: selected });
 
-            // ignore non-existant USFM
-            const results = await Promise.allSettled(guidance.references.map(getPassage));
-            const found = results
-                .filter((r): r is PromiseFulfilledResult<Passage> => r.status === "fulfilled")
-                .map((r) => r.value);
+            // is_usfm checks a reference's shape, not that it exists, so a
+            // well-formed invention reaches YouVersion and 404s there. One of
+            // those shouldn't cost the references that did come back.
+            const refs = guidance.references;
+            const results = await Promise.allSettled(refs.map(getPassage));
+
+            // allSettled preserves order, so the index still names the reference
+            const found: Entry[] = [];
+            results.forEach((r, i) => {
+                if (r.status === "fulfilled") found.push({ ...r.value, usfm: refs[i] });
+            });
 
             const missing = results.length - found.length;
             if (missing) console.warn(`feelings: ${missing}/${results.length} references unavailable`);
 
+            // the note is written to sit beside scripture; with nothing beside
+            // it, it is the app speaking on its own
             if (!found.length) throw new Error("no references resolved");
 
-            passages = found;
+            entries = found;
             note = guidance.note;
         } catch (err) {
             askError = err instanceof Error ? err.message : String(err);
@@ -72,6 +76,12 @@
         }
     }
 </script>
+
+{#snippet save(entry: Entry)}
+    <button class="keep" onclick={() => keepIt(entry)} disabled={isKept(shelf, entry.usfm)}>
+        {isKept(shelf, entry.usfm) ? "[kept]" : "[keep this one]"}
+    </button>
+{/snippet}
 
 <div class="gutter">
     <p class="lede">{prompt}</p>
@@ -97,34 +107,8 @@
     <p class="note">{note}</p>
 {/if}
 
-{#if shown}
-    <blockquote class="verse-plate">
-        <span class="verse-mark" aria-hidden="true">“</span>
-        <div class="verse-frame">
-            <p class="verse-text">{shown.text}</p>
-            <div class="verse-ref">
-                <span class="verse-rule" aria-hidden="true"></span>
-                <cite>{shown.reference}</cite>
-            </div>
-            <p class="verse-credit">{shown.versionTitle} · {shown.copyright}</p>
-        </div>
-    </blockquote>
-
-    {#if shelf.length}
-        <div class="gutter shelf">
-            <div class="rule-head">
-                <span class="eyebrow">Also on the shelf tonight</span>
-                <span class="rule" aria-hidden="true"></span>
-            </div>
-            {#each shelf as { p, i }}
-                <button class="shelf-row" onclick={() => (shownIndex = i)}>
-                    <span class="shelf-snippet">{snippet(p.text)}</span>
-                    <span class="shelf-ref">{p.reference}</span>
-                </button>
-            {/each}
-        </div>
-    {/if}
-
+{#if entries.length}
+    <div class="gutter results"><Passages {entries} action={save} /></div>
 {:else if asking}
     <p class="placeholder">Finding verses…</p>
 {:else if askError}
@@ -134,7 +118,14 @@
 {/if}
 
 <style>
+    /* Direct children of the companion's .body, a column flex container. That
+       component's own `.body > * { flex-shrink: 0 }` is Svelte-scoped and never
+       reaches a child component's roots, so without this they shrink below
+       their content. */
+    .gutter, .note, .placeholder { flex-shrink: 0; }
+
     .gutter { padding: 0 var(--pad); }
+    .results { padding-bottom: 24px; }
 
     /* feeling button */
     .pill {
@@ -190,6 +181,25 @@
         cursor: default;
     }
 
+    /* reads as done rather than offering the same passage twice */
+    .keep {
+        padding: 8px 12px;
+        background: transparent;
+        color: var(--maroon);
+        border: 1px solid var(--maroon);
+        font: 400 9.5px/1 var(--body);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background-color var(--tick) ease;
+    }
+    .keep:hover:not(:disabled) { background: rgba(var(--red), 0.07); }
+    .keep:disabled {
+        color: rgba(var(--ink), 0.38);
+        border-color: var(--hair-firm);
+        cursor: default;
+    }
+
     /* -- running copy -- */
     .lede {
         margin: 22px 0 14px;
@@ -213,89 +223,4 @@
         text-wrap: pretty;
     }
     .error { color: rgba(var(--red), 0.65); }
-
-    /* the verse */
-    .verse-plate {
-        margin: 20px var(--pad) 0;
-        padding: 14px;
-        background: var(--surface);
-        border: 1px solid rgba(var(--gold), 0.45);
-        position: relative;
-        overflow: hidden;
-    }
-    /* big quote mark, clipped by the overflow on .verse-plate */
-    .verse-mark {
-        position: absolute;
-        top: 2px;
-        left: 6px;
-        font: 400 108px/0.86 var(--display);
-        color: var(--mustard);
-        opacity: 0.12;
-        pointer-events: none;
-    }
-    .verse-frame {
-        position: relative;
-        border: 1px solid rgba(var(--gold), 0.3);
-        padding: 26px 22px 20px;
-    }
-    .verse-text {
-        margin: 0;
-        font: 400 23px/1.55 var(--display);
-        text-wrap: pretty;
-    }
-    .verse-ref {
-        margin-top: 18px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font: 400 11px/1 var(--body);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--maroon);
-        font-variant-numeric: tabular-nums;
-    }
-    /* <cite> is italic by default, the reference is set in caps */
-    .verse-ref cite { font-style: normal; }
-    .verse-rule { width: 18px; height: 1px; background: var(--maroon); }
-    .verse-credit {
-        margin: 8px 0 0;
-        font: 400 9.5px/1.5 var(--body);
-        color: rgba(var(--ink), 0.42);
-    }
-
-    /* the shelf */
-    .shelf { padding-top: 24px; padding-bottom: 24px; }
-
-    .shelf-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        align-items: baseline;
-        width: 100%;
-        text-align: left;
-        padding: 11px 0;
-        background: transparent;
-        border: none;
-        border-bottom: 1px solid rgba(var(--ink), 0.12);
-        cursor: pointer;
-        font: inherit;
-        color: inherit;
-        transition: background-color var(--tick) ease;
-    }
-    .shelf-row:hover { background: rgba(var(--gold), 0.06); }
-    .shelf-snippet {
-        font: 400 18px/1.3 var(--display);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .shelf-ref {
-        font: 400 10px/1 var(--body);
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: rgba(var(--ink), 0.45);
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-    }
-
 </style>

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { PLAN_BOOK_NAME, finishedBy, type Plan, type Reading } from "./plan";
+    import { finishedBy, versesRead, type Plan, type Reading } from "./plan";
 
-    let { plan, reading, total, loaded, error, versesToday, onVerses, onOpen }: {
+    let { plan, bookName, reading, total, loaded, error, versesToday, onVerses, onOpen }: {
         plan: Plan;
+        bookName: string;     // from the version, so it matches the translation
         reading: Reading | null;
         total: number;
         loaded: boolean;      // the book's chapter lengths have arrived
@@ -12,12 +13,14 @@
         onOpen: () => void;
     } = $props();
 
-    const percent = $derived(total ? Math.min(100, (plan.versesRead / total) * 100) : 0);
+    // the bookmark in whichever book is active
+    const read = $derived(versesRead(plan));
+    const percent = $derived(total ? Math.min(100, (read / total) * 100) : 0);
     const finish = $derived(
-        finishedBy(total - plan.versesRead, plan.pace)
+        finishedBy(total - read, plan.pace)
             .toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
     );
-    const atEnd = $derived(total > 0 && plan.versesRead >= total);
+    const atEnd = $derived(total > 0 && read >= total);
 
     // stored count is the only copy and updates when input is received
     function commit(event: Event & { currentTarget: HTMLInputElement }) {
@@ -57,14 +60,14 @@
 {#if reading}
     <div class="plan">
         <div class="plan-today">
-            <div class="plan-ref">{PLAN_BOOK_NAME} {reading.label}</div>
+            <div class="plan-ref">{bookName} {reading.label}</div>
             {@render entry()}
         </div>
 
         <div class="plan-meter">
             <div class="meter"><div class="meter-fill" style="width: {percent}%"></div></div>
             <div class="plan-count">
-                <span>{plan.versesRead} of {total} verses · finished by {finish}</span>
+                <span>{read} of {total} verses · finished by {finish}</span>
                 <button class="plan-link" onclick={onOpen}>
                     <span class="plan-link-text">Bible.com</span>
                     <svg class="ext" viewBox="0 0 12 12" aria-hidden="true">
@@ -81,12 +84,12 @@
 {:else if loaded}
     <div class="plan">
         <div class="plan-today">
-            <p class="plan-finished">{PLAN_BOOK_NAME} is finished!</p>
+            <p class="plan-finished">{bookName} is finished!</p>
             {@render entry()}
         </div>
     </div>
 {:else}
-    <p class="plan-status">Opening {PLAN_BOOK_NAME}…</p>
+    <p class="plan-status">Opening {bookName}…</p>
 {/if}
 
 <style>

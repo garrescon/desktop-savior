@@ -4,10 +4,12 @@
     import { MediaQuery } from "svelte/reactivity";
     import { emit, listen } from "@tauri-apps/api/event";
     import { openUrl } from "@tauri-apps/plugin-opener";
-    import { getChapterLengths, VERSION_ID, type ChapterLength } from "$lib/youversion/api";
     import {
-        PLAN_BOOK, PLAN_BOOK_NAME,
-        loadPlan, savePlan, setPace, advance,
+        getChapterLengths, getBooks, VERSION_ID,
+        type ChapterLength, type Book,
+    } from "$lib/youversion/api";
+    import {
+        loadPlan, savePlan, setPace, advance, versesRead, selectBook,
         readingFor, totalVerses,
     } from "$lib/reading/plan";
     import type { ReminderTheme } from "$lib/reminder/themes";
@@ -16,6 +18,7 @@
         addVerses, progressFor, ring, CONNECT_GOAL, type DayLog,
     } from "$lib/day/progress";
     import { loadPool, savePool, doneOn, add, remove, toggle as toggleItem } from "$lib/todo/pool";
+    import { loadShelf, saveShelf, drop } from "$lib/shelf/shelf";
 
     import Seal from "$lib/day/Seal.svelte";
     import PrayCard from "$lib/day/PrayCard.svelte";
@@ -24,6 +27,7 @@
     import Invocation from "$lib/reminder/Invocation.svelte";
     import Feelings from "$lib/feelings/Feelings.svelte";
     import SettingsPage from "$lib/settings/Settings.svelte";
+    import Shelf from "$lib/shelf/Shelf.svelte";
     import Marks from "$lib/shell/Marks.svelte";
 
     type Tab = "day" | "book" | "settings";
@@ -82,17 +86,35 @@
     let lengths = $state<ChapterLength[] | null>(null);
     let planError = $state(false);
 
-    // the book is fetched once, getChapterLengths caches it
+    // fetched once and cached
+    let books = $state<Book[]>([]);
     $effect(() => {
         let disposed = false;
-        getChapterLengths(PLAN_BOOK)
+        getBooks()
+            .then((b) => { if (!disposed) books = b; })
+            .catch(console.warn);
+        return () => { disposed = true; };
+    });
+
+    // re-runs when the book changes
+    $effect(() => {
+        const book = plan.book;
+        let disposed = false;
+        lengths = null;
+        planError = false;
+        getChapterLengths(book)
             .then((l) => { if (!disposed) lengths = l; })
             .catch(() => { if (!disposed) planError = true; });
         return () => { disposed = true; };
     });
 
+    // falls back to the USFM
+    const bookName = $derived(books.find((b) => b.usfm === plan.book)?.name ?? plan.book);
+
     const total = $derived(lengths ? totalVerses(lengths) : 0);
-    const reading = $derived(lengths ? readingFor(lengths, plan.versesRead, plan.pace) : null);
+    const reading = $derived(
+        lengths ? readingFor(plan.book, lengths, versesRead(plan), plan.pace) : null,
+    );
 
     // plan.pace is the Bible goal, the day log holds what each day held
     const progress = $derived(progressFor(log, today));
@@ -124,13 +146,31 @@
         plan = setPace(plan, delta);
         savePlan(plan);
     }
+
+    let shelf = $state(loadShelf());
+
+    function leaveFeelings() {
+        feelings = false;
+        shelf = loadShelf();
+    }
+
+    function dropKept(usfm: string) {
+        shelf = drop(loadShelf(), usfm);
+        saveShelf(shelf);
+    }
+
+    // each book keeps its own bookmark, so this is never destructive
+    function chooseBook(usfm: string) {
+        plan = selectBook(plan, usfm);
+        savePlan(plan);
+    }
     
     function setVersesToday(next: number) {
         refreshToday();
         if (!Number.isFinite(next) || !total) return;
 
         const current = progressFor(loadLog(), today).verses;
-        const room = total - plan.versesRead;
+        const room = total - versesRead(plan);   // what is left of the active book
         const delta = Math.max(0, Math.min(next, current + room)) - current;
         if (!delta) return;
 
@@ -161,7 +201,7 @@
   {#if feelings}
     <div class="screen" in:fade={{ duration: fadeMs }}>
       <header class="masthead bar green">
-        <button class="back" onclick={() => (feelings = false)} aria-label="Back to home">←</button>
+        <button class="back" onclick={leaveFeelings} aria-label="Back to home">←</button>
         <span class="bar-title">Feelings to Verses</span>
       </header>
 
@@ -194,11 +234,12 @@
 
           <section class="section">
             <span class="eyebrow">
-              <span class="numeral">II</span> · Reading plan · {PLAN_BOOK_NAME}
+              <span class="numeral">II</span> · Reading plan · {bookName}
             </span>
 
             <ReadingPlan
               {plan}
+              {bookName}
               {reading}
               {total}
               loaded={lengths !== null}
@@ -235,6 +276,12 @@
 
             <Invocation onRemind={remind} onFeelings={() => (feelings = true)} />
           </section>
+
+          <section class="section">
+            <span class="eyebrow">[what you've kept]</span>
+
+            <Shelf {shelf} onDrop={dropKept} />
+          </section>
         </div>
 
       {:else if tab === "settings"}
@@ -242,7 +289,14 @@
           <section class="section">
             <span class="eyebrow">[settings]</span>
 
-            <SettingsPage {settings} {plan} onPrayerGoal={prayerGoal} onPace={pace} />
+            <SettingsPage
+              {settings}
+              {plan}
+              {books}
+              onPrayerGoal={prayerGoal}
+              onPace={pace}
+              onBook={chooseBook}
+            />
           </section>
         </div>
       {/if}

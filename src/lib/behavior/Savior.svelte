@@ -3,7 +3,9 @@
     import Sprite from "$lib/sprite/Sprite.svelte";
     import type { Behavior } from "./types";
     import { pickWeighted } from "./random";
-    import { DEBUG } from "$lib/dev";
+    // timed() is temporary — STAGE-PLAN.md step 1. Every window write in this
+    // file goes through it so the rewrite's premise becomes a number.
+    import { DEBUG, timed } from "$lib/dev";
     
     let { behaviors, onStash }: { behaviors: Behavior[], onStash?: () => void } = $props();
     let generation = $state(0);
@@ -118,7 +120,7 @@
                 x += dir * movement.speed * dt;
                 if (x <= minX) { x = minX; dir = 1; facing = dir; }
                 else if (x >= maxX) { x = maxX; dir = -1; facing = dir; }
-                win.setPosition(new PhysicalPosition(Math.round(x), y)).catch(console.warn);
+                timed("walk", () => win.setPosition(new PhysicalPosition(Math.round(x), y))).catch(console.warn);
                 rafId = requestAnimationFrame(step);
             };
             rafId = requestAnimationFrame(step);
@@ -202,14 +204,14 @@
                         if (vy > BOUNCE_MIN_SPEED && BOUNCE > 0) {
                             vy = -vy * BOUNCE;
                         } else {
-                            win.setPosition(new PhysicalPosition(pos.x, floorY)).catch(console.warn);
+                            timed("land", () => win.setPosition(new PhysicalPosition(pos.x, floorY))).catch(console.warn);
                             dlog("[gravity] landed");
                             window.removeEventListener("pointerdown", grab);
                             suspended = false;
                             return;
                         }
                     }
-                    win.setPosition(new PhysicalPosition(pos.x, Math.round(y))).catch(console.warn);
+                    timed("fall", () => win.setPosition(new PhysicalPosition(pos.x, Math.round(y)))).catch(console.warn);
                     rafId = requestAnimationFrame(step);
                 };
                 rafId = requestAnimationFrame(step);

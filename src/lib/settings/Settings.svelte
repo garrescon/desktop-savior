@@ -1,17 +1,38 @@
 <script lang="ts">
     import { MIN_PRAYER, MAX_PRAYER, type Settings } from "$lib/day/progress";
     import { MIN_PACE, MAX_PACE, type Plan } from "$lib/reading/plan";
+    import type { Book } from "$lib/youversion/api";
 
-    let { settings, plan, onPrayerGoal, onPace }: {
+    let { settings, plan, books, onPrayerGoal, onPace, onBook }: {
         settings: Settings;
         plan: Plan;
+        books: Book[];
         onPrayerGoal: (delta: number) => void;
         onPace: (delta: number) => void;
+        onBook: (usfm: string) => void;
     } = $props();
 </script>
 
 <div class="settings">
-    <!-- the goals sit in the order the day tab measures them -->
+    <div class="row">
+        <div>
+            <div class="row-label">[which book]</div>
+            <div class="row-note">[the one you're reading through right now]</div>
+        </div>
+
+        <select
+            class="picker"
+            value={plan.book}
+            disabled={!books.length}
+            onchange={(e) => onBook(e.currentTarget.value)}
+            aria-label="[choose a book]"
+        >
+            {#each books as book (book.usfm)}
+                <option value={book.usfm}>{book.name}</option>
+            {/each}
+        </select>
+    </div>
+
     <div class="row">
         <div>
             <div class="row-label">[verses a day]</div>
@@ -58,8 +79,6 @@
 </div>
 
 <style>
-    /* the gap above comes from .section's head rule */
-
     .row {
         display: flex;
         align-items: flex-end;
@@ -82,6 +101,21 @@
         color: rgba(var(--ink), 0.5);
         text-wrap: pretty;
     }
+
+    .picker {
+        flex: none;
+        max-width: 46%;
+        padding: 8px 9px;
+        background: var(--surface);
+        border: 1px solid var(--hair-firm);
+        border-radius: 0;
+        color: var(--walnut);
+        font: 400 10.5px/1 var(--body);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+    .picker:disabled { color: rgba(var(--ink), 0.35); cursor: default; }
 
     .pending {
         margin: 16px 0 0;

@@ -42,6 +42,23 @@ export async function getPassage(usfm: string): Promise<Passage> {
     };
 }
 
+export interface Book {
+    usfm: string;
+    name: string;
+}
+
+let booksPromise: Promise<Book[]> | undefined;
+export function getBooks(): Promise<Book[]> {
+    if (!booksPromise) {
+        booksPromise = bible.getBooks(VERSION_ID).then((books) =>
+            books.data.map((b) => ({ usfm: b.id, name: b.title })),
+        );
+        // if it fails, wipe it to try again
+        booksPromise.catch(() => { booksPromise = undefined; });
+    }
+    return booksPromise;
+}
+
 export interface ChapterLength {
     chapter: number;
     verses: number;

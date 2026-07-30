@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 const TOKEN_URL: &str = "https://platform.ai.gloo.com/oauth2/token";
 const COMPLETIONS_URL: &str = "https://platform.ai.gloo.com/ai/v2/chat/completions";
 const SYSTEM_PROMPT: &str = include_str!("gloo_prompt.txt");
-
 #[derive(Deserialize)]
 struct TokenResponse {
     access_token: String,
@@ -56,13 +55,31 @@ async fn fetch_token(client: &reqwest::Client) -> Result<String, String> {
     Ok(token.access_token)
 }
 
+const MAX_SPAN: u32 = 12;
+
+fn is_number(part: &str) -> bool {
+    !part.is_empty() && part.len() <= 3 && part.chars().all(|c| c.is_ascii_digit())
+}
+
+// a single verse, or a range inside one chapter aka "16" or "16-18"
+fn is_verse_span(part: &str) -> bool {
+    let (first, last) = part.split_once('-').unwrap_or((part, part));
+    if !is_number(first) || !is_number(last) {
+        return false;
+    }
+    match (first.parse::<u32>(), last.parse::<u32>()) {
+        (Ok(a), Ok(b)) => b >= a && b - a < MAX_SPAN,
+        _ => false,
+    }
+}
+
 fn is_usfm(reference: &str) -> bool {
     let parts: Vec<&str> = reference.split('.').collect();
     parts.len() == 3
         && parts[0].len() == 3
         && parts[0].chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
-        && !parts[1].is_empty() && parts[1].chars().all(|c| c.is_ascii_digit())
-        && !parts[2].is_empty() && parts[2].chars().all(|c| c.is_ascii_digit())
+        && is_number(parts[1])
+        && is_verse_span(parts[2])
 }
 
 fn validate(guidance: &Guidance) -> Result<(), String> {
@@ -86,7 +103,7 @@ pub async fn ask_gloo(feelings: Vec<String>) -> Result<Guidance, String> {
     let token = fetch_token(&client).await?;
 
     let body = serde_json::json!({
-        "model": "gloo-google-gemma-4-31b",
+        "model": "gloo-anthropic-claude-sonnet-5",
         "messages": [
             { "role": "system", "content": SYSTEM_PROMPT },
             { "role": "user", "content": format!("You received: {}", feelings.join(", ")) },
