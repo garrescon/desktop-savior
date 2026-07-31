@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { Ring } from "./progress";
 
-    // names and label come from the caller — no copy lives in here
-    let { measures, label = "[the day]" }: {
+    // names and label come from the caller so no copy lives in here
+    let { measures, label = "the day" }: {
         measures: { name: string; tint: string; ring: Ring }[];
         label?: string;
     } = $props();

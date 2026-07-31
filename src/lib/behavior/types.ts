@@ -4,7 +4,9 @@ export type Termination =
     | { kind: "animationEnd" }
     | { kind: "duration"; minMs: number; maxMs: number };
 
-export type Movement = { kind: "walk"; speed: number }
+export type Movement = { kind: "walk"; speed: number; direction: 1 | -1 }
+
+export const GRAVITY = 3000;
 
 export interface BehaviorDef {
     id: string;
@@ -31,11 +33,17 @@ export async function loadBehaviors(defs: BehaviorDef[]): Promise<Behavior[]> {
             return null;
         }
         const sheet = verifySheet(await response.json());
-        const tags = new Map(sheet.meta.frameTags.map((t) => [t.name, t]));
+        // Aseprite exports whatever the artist typed
+        const tags = new Map(sheet.meta.frameTags.map((t) => [t.name.trim().toLowerCase(), t]));
 
-        // tagged needs "loop", optional "intro"/"outro"
-        // no tags, mark the whole animation as the loop
-        // any tags, loop must be already assigned
+        // an unrecognised tag is a segment that silently never plays
+        for (const name of tags.keys()) {
+            if (name !== "intro" && name !== "loop" && name !== "outro") {
+                console.warn(`${def.id}: ignoring unknown tag "${name}"`);
+            }
+        }
+
+        // an untagged sheet is all loop and a tagged one must say so itself
         let loop = tags.get("loop");
         if (!loop) {
             if (tags.size > 0) {

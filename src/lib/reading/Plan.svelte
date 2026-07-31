@@ -22,11 +22,12 @@
     );
     const atEnd = $derived(total > 0 && read >= total);
 
-    // stored count is the only copy and updates when input is received
+    // the parent owns the count and this input only reports edits to it
     function commit(event: Event & { currentTarget: HTMLInputElement }) {
         const parsed = parseInt(event.currentTarget.value, 10);
         if (Number.isFinite(parsed)) onVerses(parsed);
-        // reverts when rejecting bad input
+        // unconditional so bad input snaps back
+        // an accepted edit is overwritten by the same number returning through the prop
         event.currentTarget.value = String(versesToday);
     }
 </script>
@@ -38,19 +39,19 @@
             <button
                 onclick={() => onVerses(versesToday - 1)}
                 disabled={versesToday <= 0}
-                aria-label="[one verse fewer]"
+                aria-label="one verse fewer"
             >–</button>
             <input
                 inputmode="numeric"
                 value={versesToday}
                 onchange={commit}
                 onblur={commit}
-                aria-label="[verses read today]"
+                aria-label="verses read today"
             />
             <button
                 onclick={() => onVerses(versesToday + 1)}
                 disabled={atEnd}
-                aria-label="[one verse more]"
+                aria-label="one verse more"
             >+</button>
         </div>
         <div class="plan-label">Verses Read</div>
@@ -111,12 +112,9 @@
         color: var(--walnut);
     }
 
-    /* The caption is taken out of the flow so this block is exactly as tall as
-       the stepper and the same height as the prayer button. That is what lets one
-       --head-gap produce the same visible gap in both sections. while the
-       caption was in the flow, this block was 65px against the button's 32px
-       and the two could only be matched by hand. --row-gap below leaves the
-       room the caption now floats into. */
+    /* the caption is out of the flow so this block is as tall as the stepper
+       and matches the prayer button */
+    /* --row-gap below leaves the room the caption floats into */
     .plan-entry {
         flex: none;
         position: relative;

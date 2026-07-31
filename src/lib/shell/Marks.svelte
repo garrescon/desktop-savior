@@ -1,5 +1,4 @@
 <script lang="ts" generics="T extends string">
-    // labels come from the caller
     let { tabs, current, onSelect }: {
         tabs: { id: T; label: string }[];
         current: T;
@@ -49,7 +48,7 @@
         padding-bottom: 11px;
     }
 
-    /* marks sit flush against the band's edge */
+    /* inset because an outward outline is clipped by the flush edge */
     .mark:focus-visible {
         outline: 1px solid var(--mustard);
         outline-offset: -3px;

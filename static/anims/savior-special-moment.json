@@ -1,47 +1,56 @@
 { "frames": [
    {
-    "filename": "Sprite-0001 0.",
+    "filename": "0",
     "frame": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 750
+    "duration": 1000
    },
    {
-    "filename": "Sprite-0001 1.",
+    "filename": "1",
     "frame": { "x": 24, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 750
+    "duration": 800
    },
    {
-    "filename": "Sprite-0001 2.",
+    "filename": "2",
     "frame": { "x": 48, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 750
+    "duration": 500
    },
    {
-    "filename": "Sprite-0001 3.",
+    "filename": "3",
     "frame": { "x": 72, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 750
+    "duration": 800
+   },
+   {
+    "filename": "4",
+    "frame": { "x": 96, "y": 0, "w": 24, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
+    "duration": 800
    }
  ],
  "meta": {
   "app": "https://www.aseprite.org/",
-  "version": "1.3.17.2-x64",
-  "image": "savior-generic-walk.png",
+  "version": "1.3.18.1-x64",
+  "image": "savior-special-moment.png",
   "format": "RGBA8888",
-  "size": { "w": 96, "h": 24 },
+  "size": { "w": 120, "h": 24 },
   "scale": "1",
   "frameTags": [
   ]

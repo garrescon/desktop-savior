@@ -7,9 +7,16 @@ export interface DayProgress {
 
 export type DayLog = Record<string, DayProgress>;
 
-// the Bible goal is plan.pace
+// the lens Gloo answers through
+// "default" is sent as nothing at all so the model keeps its general perspective
+export const TRADITIONS = ["default", "evangelical", "catholic", "mainline"] as const;
+export type Tradition = (typeof TRADITIONS)[number];
+export const DEFAULT_TRADITION: Tradition = "default";
+
+// the Bible goal is not here because it lives on plan.pace
 export interface Settings {
     prayerMinutes: number;
+    tradition: Tradition;
 }
 
 export const MIN_PRAYER = 1, MAX_PRAYER = 120, DEFAULT_PRAYER = 10;
@@ -54,8 +61,12 @@ export function loadSettings(): Settings {
             prayerMinutes: Number.isFinite(parsed?.prayerMinutes)
                 ? clamp(parsed!.prayerMinutes!, MIN_PRAYER, MAX_PRAYER)
                 : DEFAULT_PRAYER,
+            // settings saved before this existed read as the default
+            tradition: TRADITIONS.includes(parsed?.tradition as Tradition)
+                ? (parsed!.tradition as Tradition)
+                : DEFAULT_TRADITION,
         };
-    }, () => ({ prayerMinutes: DEFAULT_PRAYER }));
+    }, () => ({ prayerMinutes: DEFAULT_PRAYER, tradition: DEFAULT_TRADITION }));
 }
 
 export function saveSettings(settings: Settings): void {
@@ -64,6 +75,10 @@ export function saveSettings(settings: Settings): void {
 
 export function setPrayerGoal(settings: Settings, delta: number): Settings {
     return { ...settings, prayerMinutes: clamp(settings.prayerMinutes + delta, MIN_PRAYER, MAX_PRAYER) };
+}
+
+export function setTradition(settings: Settings, tradition: Tradition): Settings {
+    return { ...settings, tradition };
 }
 
 // missing days read as zeros
@@ -97,7 +112,7 @@ export interface Ring {
     complete: boolean;
 }
 
-// zero = unfinished
+// a goal of zero never reads as complete
 export function ring(done: number, goal: number): Ring {
     return {
         done,

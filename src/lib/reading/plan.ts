@@ -5,12 +5,11 @@ export const DEFAULT_BOOK = "LUK";
 
 export const MIN_PACE = 1, MAX_PACE = 40, DEFAULT_PACE = 10;
 
-// One bookmark per book, keyed by USFM code, each a count of verses read from
-// that book's start. Changing books keeps your place in the old one rather than
-// discarding it, so switching is never destructive.
-//
-// Still separate from the day log's `verses`, which is what a day held whatever
-// book it came from. Two facts that look like one — see HANDOFF invariant 4.
+// mirrors MAX_SPAN in gloo.rs, which rejects a reference whose range runs longer
+export const MAX_SPAN = 12;
+
+// one bookmark per book so switching is never destructive
+// still separate from the day log's verses which is whatever a day held
 export interface Plan {
     book: string;
     books: Record<string, number>;
@@ -33,8 +32,8 @@ export function loadPlan(): Plan {
         if (Number.isFinite(parsed.pace)) plan.pace = clamp(parsed.pace as number, MIN_PACE, MAX_PACE);
         if (typeof parsed.book === "string" && parsed.book) plan.book = parsed.book;
 
-        // v1 stored one count and only ever read Luke; carry it into the map so
-        // an existing reader doesn't lose their place to this change
+        // v1 stored one count and only ever read Luke
+        // carrying it into the map keeps an existing reader's place
         if (!parsed.books && typeof parsed.versesRead !== "undefined") {
             plan.books = { [DEFAULT_BOOK]: whole(parsed.versesRead) };
             return plan;
@@ -84,6 +83,8 @@ export interface Reading {
     label: string;
     // the start verse only
     startUsfm: string;
+    // the whole reading where it fits in one reference, otherwise its first verse
+    usfm: string;
 }
 
 function locate(lengths: ChapterLength[], offset: number) {
@@ -115,6 +116,11 @@ export function readingFor(book: string, lengths: ChapterLength[], read: number,
             ? `${from.chapter}:${from.verse}–${to.verse}`
             : `${from.chapter}:${from.verse}–${to.chapter}:${to.verse}`,
         startUsfm: `${book}.${from.chapter}.${from.verse}`,
+        // a usfm range cannot cross a chapter and gloo.rs caps a span at MAX_SPAN
+        // a reading that breaks either rule falls back to the verse it starts on
+        usfm: from.chapter === to.chapter && to.verse - from.verse < MAX_SPAN
+            ? `${book}.${from.chapter}.${from.verse}-${to.verse}`
+            : `${book}.${from.chapter}.${from.verse}`,
     };
 }
 

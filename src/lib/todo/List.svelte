@@ -28,36 +28,36 @@
         <input
             bind:value={draft}
             maxlength={MAX_TEXT}
-            placeholder="[write something for a day you're ready for it]"
-            aria-label="[new item]"
+            placeholder="Where can you put the Word in practice?"
+            aria-label="new item"
         />
-        <button type="submit" disabled={!draft.trim()}>[keep]</button>
+        <button type="submit" disabled={!draft.trim()}>keep</button>
     </form>
 
     {#if waiting.length}
         <ul class="items">
             {#each waiting as item (item.id)}
                 <li>
-                    <button class="drop" onclick={() => onRemove(item.id)} aria-label="[remove]">×</button>
+                    <button class="drop" onclick={() => onRemove(item.id)} aria-label="remove">×</button>
                     <span class="text">{item.text}</span>
-                    <button class="check" onclick={() => onToggle(item.id)} aria-label="[mark done]"></button>
+                    <button class="check" onclick={() => onToggle(item.id)} aria-label="mark done"></button>
                 </li>
             {/each}
         </ul>
     {:else}
-        <p class="empty">[nothing waiting]</p>
+        <p class="empty">nothing waiting</p>
     {/if}
 
     {#if done.length}
         <div class="rule-head">
-            <span class="sublabel">[done today]</span>
+            <span class="sublabel">done today</span>
             <span class="rule" aria-hidden="true"></span>
         </div>
         <ul class="items">
             {#each done as item (item.id)}
                 <li class="done-row">
                     <span class="text spent">{item.text}</span>
-                    <button class="check done" onclick={() => onToggle(item.id)} aria-label="[undo]">✓</button>
+                    <button class="check done" onclick={() => onToggle(item.id)} aria-label="undo">✓</button>
                 </li>
             {/each}
         </ul>

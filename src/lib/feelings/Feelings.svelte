@@ -1,19 +1,19 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
-    import { getPassage } from "$lib/youversion/api";
+    import { getCachedPassage } from "$lib/youversion/cache";
     import Passages, { type Entry } from "$lib/shelf/Passages.svelte";
     import { loadShelf, saveShelf, keep, isKept } from "$lib/shelf/shelf";
+    import { FEELINGS, FEELING_IDS, type FeelingId } from "./feelings";
+    import { loadSettings } from "$lib/day/progress";
 
     // keep in sync with Guidance struct in src-tauri/src/gloo.rs
     interface Guidance { references: string[]; note: string; }
 
-    const FEELINGS = [
-        "Peaceful", "Accomplished", "Loved",
-        "Unforgiving", "Lonely", "Unmotivated",
-    ];
-
     // this component is unmounted on exit so it clears
-    let selected = $state<string[]>([]);
+    let selected = $state<FeelingId[]>([]);
+
+    // what produced the results on screen because the pills stay live after an ask
+    let askedWith = $state<FeelingId[]>([]);
     let note = $state<string | null>(null);
     let entries = $state<Entry[]>([]);
     let asking = $state(false);
@@ -28,7 +28,7 @@
             : "How do you feel?",
     );
 
-    function toggleFeeling(feeling: string) {
+    function toggleFeeling(feeling: FeelingId) {
         selected = selected.includes(feeling)
             ? selected.filter((f) => f !== feeling)
             : [...selected, feeling];
@@ -36,7 +36,7 @@
 
     // re-reads first — the book tab writes this same shelf
     function keepIt(entry: Entry) {
-        shelf = keep(loadShelf(), entry.usfm, entry);
+        shelf = keep(loadShelf(), entry.usfm, entry, { kind: "feeling", ids: askedWith });
         saveShelf(shelf);
     }
 
@@ -45,14 +45,20 @@
         askError = null;
         note = null;
         entries = [];
+        const asked = [...selected];
         try {
-            const guidance = await invoke<Guidance>("ask_gloo", { feelings: selected });
+            // the model is told the words and not the ids
+            // the tradition is re-read because settings live in the other tab
+            const guidance = await invoke<Guidance>("ask_gloo", {
+                feelings: asked.map((id) => FEELINGS[id]),
+                tradition: loadSettings().tradition,
+            });
 
             // is_usfm checks a reference's shape, not that it exists, so a
             // well-formed invention reaches YouVersion and 404s there. One of
             // those shouldn't cost the references that did come back.
             const refs = guidance.references;
-            const results = await Promise.allSettled(refs.map(getPassage));
+            const results = await Promise.allSettled(refs.map(getCachedPassage));
 
             // allSettled preserves order, so the index still names the reference
             const found: Entry[] = [];
@@ -69,7 +75,10 @@
 
             entries = found;
             note = guidance.note;
+            askedWith = asked;
         } catch (err) {
+            // the raw answer is read here because askError below is only a flag
+            console.error("ask_gloo:", err);
             askError = err instanceof Error ? err.message : String(err);
         } finally {
             asking = false;
@@ -79,7 +88,7 @@
 
 {#snippet save(entry: Entry)}
     <button class="keep" onclick={() => keepIt(entry)} disabled={isKept(shelf, entry.usfm)}>
-        {isKept(shelf, entry.usfm) ? "[kept]" : "[keep this one]"}
+        {isKept(shelf, entry.usfm) ? "kept" : "keep this one"}
     </button>
 {/snippet}
 
@@ -87,14 +96,14 @@
     <p class="lede">{prompt}</p>
 
     <div class="pill-wrap">
-        {#each FEELINGS as feeling}
+        {#each FEELING_IDS as id}
             <button
                 class="pill feeling"
-                class:selected={selected.includes(feeling)}
-                aria-pressed={selected.includes(feeling)}
-                onclick={() => toggleFeeling(feeling)}
+                class:selected={selected.includes(id)}
+                aria-pressed={selected.includes(id)}
+                onclick={() => toggleFeeling(id)}
                 disabled={asking}
-            >{feeling}</button>
+            >{FEELINGS[id]}</button>
         {/each}
     </div>
 
@@ -108,7 +117,8 @@
 {/if}
 
 {#if entries.length}
-    <div class="gutter results"><Passages {entries} action={save} /></div>
+    <!-- the first result opens because it is the answer to the ask -->
+    <div class="gutter results"><Passages {entries} action={save} openFirst /></div>
 {:else if asking}
     <p class="placeholder">Finding verses…</p>
 {:else if askError}

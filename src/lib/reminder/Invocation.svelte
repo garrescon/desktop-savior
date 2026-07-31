@@ -1,6 +1,7 @@
 <script lang="ts">
     import { MediaQuery } from "svelte/reactivity";
     import { REMINDERS, type ReminderTheme } from "./themes";
+    import { shuffle } from "./rotation";
 
     let { onRemind, onFeelings }: {
         onRemind: (theme: ReminderTheme) => void;
@@ -8,6 +9,7 @@
     } = $props();
 
     const themes = Object.entries(REMINDERS) as [ReminderTheme, typeof REMINDERS[ReminderTheme]][];
+    const cycle = shuffle(themes);
 
     const reduceMotion = new MediaQuery("(prefers-reduced-motion: reduce)");
 
@@ -16,7 +18,7 @@
     let menuOpen = $state(false);
 
     const CYCLE_MS = 2600, FADE_MS = 240;
-    const cycleWord = $derived(themes[wordIndex % themes.length][1].label);
+    const cycleWord = $derived(cycle[wordIndex % cycle.length][1].label);
 
     // leaving the tab unmounts this and stops the cycle
     $effect(() => {
@@ -64,7 +66,6 @@
                     {#each themes as [theme, def]}
                         <button class="word-option" onclick={() => pick(theme)}>
                             <span>{def.label}</span>
-                            <span class="word-count">{def.refs.length}</span>
                         </button>
                     {/each}
                 </div>
@@ -80,14 +81,14 @@
 <style>
     /* the gap above comes from .section's head rule */
 
-    /* "Remind me of His ..." */
     .invocation {
         margin: 0;
         font: 400 27px/1.25 var(--display);
         color: var(--walnut);
     }
-    .word-slot { position: relative; display: inline-block; }
-    /* word button */
+    /* block so a short theme drops to its own line instead of riding up beside the ellipsis */
+    /* otherwise the plate changes shape as the word cycles */
+    .word-slot { position: relative; display: block; }
     .word {
         background: transparent;
         border: none;
@@ -131,11 +132,6 @@
         transition: color var(--tick) ease;
     }
     .word-option:hover { color: var(--maroon); }
-    .word-count {
-        font: 400 9.5px/1 var(--body);
-        color: rgba(var(--ink), 0.35);
-        font-variant-numeric: tabular-nums;
-    }
 
     /* the second way out of the plate */
     .feel-link {

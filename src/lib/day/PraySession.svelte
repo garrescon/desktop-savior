@@ -1,15 +1,57 @@
 <script lang="ts">
+    import { listen } from "@tauri-apps/api/event";
+
     import Sprite from "$lib/sprite/Sprite.svelte";
-    import type { Behavior } from "$lib/behavior/types";
+    import { GRAVITY, type Behavior } from "$lib/behavior/types";
+    import { hitbox } from "$lib/stage/hitbox";
 
     let { behavior, goalSeconds, onDone }: {
         behavior: Behavior | null;
         goalSeconds: number;
-        onDone: (seconds: number) => void;
+        // the lift is what His window spawns at so gravity takes Him down from here
+        onDone: (seconds: number, liftCss: number) => void;
     } = $props();
 
     const started = Date.now();
     let elapsed = $state(0);
+
+    // the segment machine lives in Savior so the sitting needs its own
+    let segment = $state<"intro" | "loop">("loop");
+    $effect(() => {
+        if (behavior?.intro) segment = "intro";
+    });
+    const tag = $derived(
+        segment === "intro" && behavior?.intro ? behavior.intro : behavior?.loop,
+    );
+
+    let riser = $state<HTMLDivElement | null>(null);
+
+    // the wrapper fills the dial so the sprite itself is the thing to measure
+    function spriteLift(): number {
+        const drawn = riser?.firstElementChild;
+        if (!drawn) return 0;
+        return Math.max(0, window.innerHeight - drawn.getBoundingClientRect().bottom);
+    }
+
+    // He hops in along the floor so the dial has to be reached rather than cut to
+    $effect(() => {
+        const wrap = riser;
+        if (!wrap) return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        const drop = spriteLift();
+        if (drop <= 0) return;
+
+        const rise = wrap.animate(
+            [{ transform: `translateY(${drop}px)` }, { transform: "translateY(0)" }],
+            {
+                // the rise half of a jump to that height
+                duration: Math.sqrt((2 * drop) / GRAVITY) * 1000,
+                easing: "cubic-bezier(0.12, 0.68, 0.32, 1)",
+            },
+        );
+        return () => rise.cancel();
+    });
 
     $effect(() => {
         const id = setInterval(() => {
@@ -22,14 +64,27 @@
     const fraction = $derived(goalSeconds > 0 ? Math.min(1, elapsed / goalSeconds) : 0);
     const closed = $derived(goalSeconds > 0 && elapsed >= goalSeconds);
 
-    // button shows a temp message for 4 seconds to confirm the clock has started
-    const CONFIRM_S = 4;
-    const confirming = $derived(elapsed < CONFIRM_S);
+    $effect(() => {
+        let disposed = false;
+        let unlisten: (() => void) | undefined;
+
+        listen("amen", () => {
+            onDone(elapsed, spriteLift());
+        }).then((fn) => {
+            if (disposed) { fn(); return; }
+            unlisten = fn;
+        }).catch(console.warn);
+
+        return () => {
+            disposed = true;
+            unlisten?.();
+        };
+    });
 </script>
 
-<div class="sitting">
+<div class="sitting" use:hitbox>
     <div class="dial">
-        <svg viewBox="0 0 120 120" role="img" aria-label="[time with Him]">
+        <svg viewBox="0 0 120 120" role="img" aria-label="time with Him">
             <g transform="rotate(-90 60 60)">
                 <circle class="track" cx="60" cy="60" r="52" />
                 <circle
@@ -43,18 +98,18 @@
             </g>
         </svg>
 
-        {#if behavior}
-            <div class="sprite">
-                <Sprite src={behavior.src} sheet={behavior.sheet} tag={behavior.loop} />
+        {#if behavior && tag}
+            <div class="sprite" bind:this={riser}>
+                <Sprite
+                    src={behavior.src}
+                    sheet={behavior.sheet}
+                    {tag}
+                    loop={segment === "loop"}
+                    onComplete={() => (segment = "loop")}
+                />
             </div>
         {/if}
     </div>
-
-    <p class="breath">[breath]</p>
-
-    <button class="done" onclick={() => onDone(elapsed)}>
-        {confirming ? "[the sitting has begun]" : "[amen]"}
-    </button>
 </div>
 
 <style>
@@ -93,30 +148,7 @@
     }
     .arc.closed { stroke: var(--mustard); }
 
-    .breath {
-        margin: 0;
-        max-width: 300px;
-        font: italic 400 17px/1.6 var(--display);
-        color: var(--walnut);
-        text-align: center;
-        text-wrap: pretty;
-    }
-
-    .done {
-        padding: 11px 26px;
-        background: transparent;
-        color: var(--walnut);
-        border: 1px solid rgba(var(--ink), 0.4);
-        font: 400 11px/1 var(--body);
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: background-color var(--tick) ease;
-    }
-    .done:hover { background: rgba(var(--ink), 0.07); }
-    .done:focus-visible { outline: 1px solid var(--mustard); outline-offset: 2px; }
-
     @media (prefers-reduced-motion: reduce) {
-        .arc, .done { transition: none; }
+        .arc { transition: none; }
     }
 </style>

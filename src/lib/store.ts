@@ -13,7 +13,7 @@ export function save(key: string, value: unknown): void {
     localStorage.setItem(key, JSON.stringify(value));
 }
 
-// rounds since everything is a whole number
+// rounds where whole floors
 export function clamp(n: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, Math.round(n)));
 }
