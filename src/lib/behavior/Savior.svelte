@@ -25,10 +25,6 @@
 
     type Segment = "intro" | "loop" | "outro";
 
-<<<<<<< HEAD
-=======
-    const dlog = trace;
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     const win = getCurrentWindow();
 
     const HOP_APEX = 90;
@@ -70,11 +66,7 @@
 
     function startNextBehavior(from: Behavior[] = pool) {
         const next = pickWeighted(from, (b) => b.weight);
-<<<<<<< HEAD
         trace(`[pick #${generation + 1}] ${behavior.id} -> ${next.id}${next === behavior ? " (REPEAT)" : ""}`);
-=======
-        dlog(`[pick #${generation + 1}] ${behavior.id} -> ${next.id}${next === behavior ? " (REPEAT)" : ""}`);
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
         adopt(next);
     }
 
@@ -99,11 +91,7 @@
     }
 
     // every window write needs the same geometry so read it once
-<<<<<<< HEAD
     async function readGeometry() {
-=======
-    async function readStage() {
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
         const [monitor, pos, size] = await Promise.all([
             currentMonitor(), win.outerPosition(), win.outerSize(),
         ]);
@@ -142,11 +130,7 @@
     $effect(() => {
         if (!attention) return;
         untrack(() => {
-<<<<<<< HEAD
             if (play(ATTENTION_ID)) trace(`[attention] (#${attention})`);
-=======
-            if (play(ATTENTION_ID)) dlog(`[attention] (#${attention})`);
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
         });
     });
 
@@ -158,11 +142,7 @@
         suspended = true;
 
         (async () => {
-<<<<<<< HEAD
             const geo = await readGeometry();
-=======
-            const stage = await readStage();
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
             if (disposed) return;
 
             const arrive = () => {
@@ -170,15 +150,9 @@
                 onSummoned?.();
             };
 
-<<<<<<< HEAD
             if (!geo) { arrive(); return; }
 
             const { pos, minX, maxX, floorY } = geo;
-=======
-            if (!stage) { arrive(); return; }
-
-            const { pos, minX, maxX, floorY } = stage;
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
             // He is drawn centred in both windows so the resize moves Him nowhere
             const targetX = minX + Math.round((maxX - minX) / 2);
             const span = targetX - pos.x;
@@ -195,11 +169,7 @@
             const hops = Math.max(1, Math.round(Math.abs(span) / HOP_SPAN));
             const vy0 = -Math.sqrt(2 * G * HOP_APEX);
             const flight = (-2 * vy0) / G;
-<<<<<<< HEAD
             trace(`[summon] ${hops} hop(s) over ${span}px`);
-=======
-            dlog(`[summon] ${hops} hop(s) over ${span}px`);
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
 
             let hop = 0;
             let t = 0;
@@ -214,11 +184,7 @@
                 if (t >= flight) { hop++; t -= flight; }
                 if (hop >= hops) {
                     win.setPosition(new PhysicalPosition(targetX, floorY)).catch(console.warn);
-<<<<<<< HEAD
                     trace("[summon] arrived");
-=======
-                    dlog("[summon] arrived");
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                     arrive();
                     return;
                 }
@@ -270,31 +236,18 @@
         window.addEventListener("pointerdown", endWalk);
 
         (async () => {
-<<<<<<< HEAD
             const geo = await readGeometry();
             if (disposed || !geo) return;
 
             const { minX, maxX } = geo;
             let x = geo.pos.x;
             const y = geo.pos.y;
-=======
-            const stage = await readStage();
-            if (disposed || !stage) return;
-
-            const { minX, maxX } = stage;
-            let x = stage.pos.x;
-            const y = stage.pos.y;
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
             // no room to walk makes every frame an edge hit
             if (maxX <= minX) { endWalk(); return; }
 
             const dir = movement.direction;
             let last = performance.now();
-<<<<<<< HEAD
             trace(`[walk] ${behavior.id} dir=${dir} from x=${x} minX=${minX} maxX=${maxX}`);
-=======
-            dlog(`[walk] ${behavior.id} dir=${dir} from x=${x} minX=${minX} maxX=${maxX}`);
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
 
             const step = (now: number) => {
                 if (disposed) return;
@@ -304,20 +257,12 @@
                 // direction matters or a window dragged out of bounds turns on its first frame
                 // no snap because a frame overshoots the edge by about a pixel
                 if (dir < 0 && x <= minX) {
-<<<<<<< HEAD
                     trace(`[walk] reached the left edge at ${Math.round(x)}`);
-=======
-                    dlog(`[walk] reached the left edge at ${Math.round(x)}`);
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                     turn(1);
                     return;
                 }
                 if (dir > 0 && x >= maxX) {
-<<<<<<< HEAD
                     trace(`[walk] reached the right edge at ${Math.round(x)}`);
-=======
-                    dlog(`[walk] reached the right edge at ${Math.round(x)}`);
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                     turn(-1);
                     return;
                 }
@@ -348,19 +293,11 @@
         const BOUNCE_MIN_SPEED = 400;
 
         (async () => {
-<<<<<<< HEAD
             const geo = await readGeometry();
             if (disposed) return;
             // never leave Him frozen just because the monitor could not be read
             if (!geo) { suspended = false; return; }
             const { size, area, minX, floorY } = geo;
-=======
-            const stage = await readStage();
-            if (disposed) return;
-            // never leave Him frozen just because the monitor could not be read
-            if (!stage) { suspended = false; return; }
-            const { size, area, minX, floorY } = stage;
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
 
             // a fall writes the same x every frame so a different one means another owner
             // usually that is a drag which never announced its end
@@ -373,11 +310,7 @@
                 cancelAnimationFrame(rafId);
                 removeGrab?.();
                 removeGrab = undefined;
-<<<<<<< HEAD
                 trace("[gravity] fall released, something else owns the position");
-=======
-                dlog("[gravity] fall released, something else owns the position");
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
             }
 
             // suspends behavior while He is above the floor
@@ -388,22 +321,14 @@
                 if (disposed) return;
                 const pos = await win.outerPosition();
                 if (disposed) return;
-<<<<<<< HEAD
                 trace(
-=======
-                dlog(
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                     `[gravity] check pos=(${pos.x},${pos.y}) floor=${floorY}` +
                     ` win=${size.width}x${size.height}` +
                     ` area=(${area.size.width}x${area.size.height})` +
                     ` suspended=${suspended}`,
                 );
                 if (pos.y >= floorY - 1) {
-<<<<<<< HEAD
                     trace("[gravity] already on the floor");
-=======
-                    dlog("[gravity] already on the floor");
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                     // dropped by a drag rather than by a fall so the pose still needs clearing
                     if (behavior.id === FALL_ID) startNextBehavior();
                     suspended = false;
@@ -421,7 +346,6 @@
                 const nearCorner = pos.x <= minX + STASH_ZONE && pos.y >= floorY - STASH_ZONE;
 
                 // ungated for the same reason maybeFall is
-<<<<<<< HEAD
                 trace(`[gravity] nearCorner=${nearCorner} zone=${STASH_ZONE}`);
                 if (nearCorner) {
                     trace("[gravity] stashing");
@@ -429,15 +353,6 @@
                     return;
                 }
                 trace(`[gravity] falling from y=${y} to floor=${floorY}`);
-=======
-                dlog(`[gravity] nearCorner=${nearCorner} zone=${STASH_ZONE}`);
-                if (nearCorner) {
-                    dlog("[gravity] stashing");
-                    onStash?.();
-                    return;
-                }
-                dlog(`[gravity] falling from y=${y} to floor=${floorY}`);
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                 fallingX = pos.x;
                 play(FALL_ID);
 
@@ -460,11 +375,7 @@
                             vy = -vy * BOUNCE;
                         } else {
                             win.setPosition(new PhysicalPosition(pos.x, floorY)).catch(console.warn);
-<<<<<<< HEAD
                             trace("[gravity] landed");
-=======
-                            dlog("[gravity] landed");
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                             window.removeEventListener("pointerdown", grab);
                             fallingX = null;
                             startNextBehavior();

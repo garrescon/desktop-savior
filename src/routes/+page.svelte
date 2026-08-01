@@ -15,12 +15,8 @@
   } from "$lib/shelf/shelf";
   import { REMINDERS, type ReminderTheme } from "$lib/reminder/themes";
   import { nextRef } from "$lib/reminder/rotation";
-<<<<<<< HEAD
   import { dayKey, loadLog, saveLog, addSeconds } from "$lib/day/progress";
   import { loadSettings } from "$lib/settings/settings";
-=======
-  import { dayKey, loadLog, saveLog, loadSettings, addSeconds } from "$lib/day/progress";
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
   import { DEMO_MODE, trace, reportErrors } from "$lib/dev";
 
   import Savior from "$lib/behavior/Savior.svelte";

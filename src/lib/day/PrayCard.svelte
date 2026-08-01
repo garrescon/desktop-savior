@@ -33,10 +33,6 @@
         padding-bottom: 20px;
     }
 
-<<<<<<< HEAD
-=======
-    /* centered rather than baseline-aligned */
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     /* the display face has descenders that hang below the button when bottom-aligned */
     .pray-head {
         display: flex;

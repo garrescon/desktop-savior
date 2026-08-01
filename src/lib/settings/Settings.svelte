@@ -1,11 +1,7 @@
 <script lang="ts">
     import {
         MIN_PRAYER, MAX_PRAYER, TRADITIONS, type Settings, type Tradition,
-<<<<<<< HEAD
     } from "./settings";
-=======
-    } from "$lib/day/progress";
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     import { MIN_PACE, MAX_PACE, type Plan } from "$lib/reading/plan";
     import type { Book } from "$lib/youversion/api";
 

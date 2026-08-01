@@ -37,10 +37,7 @@ pub fn run() {
             get_app_version,
             debug_log,
             gloo::ask_gloo,
-<<<<<<< HEAD
             gloo::ask_topic,
-=======
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
             gloo::ask_passage,
             stage::set_hit_rects,
             tray::set_savior_mode

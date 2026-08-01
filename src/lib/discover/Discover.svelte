@@ -4,11 +4,7 @@
     import Passages, { type Entry } from "$lib/shelf/Passages.svelte";
     import { getCachedPassage } from "$lib/youversion/cache";
     import { SOURCE_IDS, SOURCE_CATALOG, sourceById } from "$lib/sources/sources";
-<<<<<<< HEAD
     import { loadSettings } from "$lib/settings/settings";
-=======
-    import { loadSettings } from "$lib/day/progress";
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     import { loadShelf, saveShelf, keep, annotate, isKept } from "$lib/shelf/shelf";
     import { MAX_SPAN, type Reading } from "$lib/reading/plan";
     import type { Book } from "$lib/youversion/api";
@@ -61,10 +57,6 @@
         `${books.find((b) => b.usfm === chosen)?.name ?? chosen} ${Math.max(1, chapter)}:${span}`,
     );
 
-<<<<<<< HEAD
-=======
-    // the tradition is re-read because settings live in another tab
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     const lens = () => loadSettings().tradition;
 
     function takeReading() {
@@ -86,11 +78,7 @@
         draft = "";
     }
 
-<<<<<<< HEAD
     // re-reads first, this shelf has more than one writer
-=======
-    // re-reads first because His window writes this same shelf
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     function commitKeep(entry: Entry) {
         const origin = asked ? { kind: "aspect" as const, ids: [asked] } : undefined;
         let next = keep(loadShelf(), entry.usfm, entry, origin);
@@ -235,15 +223,9 @@
             <Passages entries={related} action={keepAction} annotation={keepNote} />
         {/if}
     {:else if asking}
-<<<<<<< HEAD
         <p class="placeholder">Looking</p>
     {:else if failed}
         <p class="placeholder error">Couldn't reach the library, try again later.</p>
-=======
-        <p class="placeholder">looking</p>
-    {:else if failed}
-        <p class="placeholder">couldn't reach it, try again later</p>
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     {/if}
 </div>
 
@@ -285,31 +267,9 @@
     }
     .colon, .dash { color: rgba(var(--ink), 0.4); }
 
-<<<<<<< HEAD
     /* .keep is in companion.css */
 
     /* the same composer the shelf uses, so writing a note feels the same in both places */
-=======
-    /* the same composer the shelf uses, so writing a note feels the same in both places */
-    .keep {
-        padding: 8px 12px;
-        background: transparent;
-        color: var(--maroon);
-        border: 1px solid var(--maroon);
-        font: 400 9.5px/1 var(--body);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: background-color var(--tick) ease;
-    }
-    .keep:hover:not(:disabled) { background: rgba(var(--red), 0.07); }
-    .keep:disabled {
-        color: rgba(var(--ink), 0.38);
-        border-color: var(--hair-firm);
-        cursor: default;
-    }
-
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     .draft {
         display: block;
         width: 100%;
@@ -354,37 +314,8 @@
     }
     .today { margin-top: 10px; }
 
-<<<<<<< HEAD
     /* .pill and .pill-wrap are in companion.css, this is only the distance above them */
     .pill-wrap { margin-top: 16px; }
-=======
-    .pill-wrap { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 7px; }
-    .pill {
-        flex: none;
-        font: 400 16px/1 var(--display);
-        color: var(--walnut);
-        background: var(--surface);
-        border: 1px solid rgba(var(--ink), 0.22);
-        border-radius: 999px;
-        padding: 10px 15px 11px;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: color var(--tick) ease, border-color var(--tick) ease, background-color var(--tick) ease;
-    }
-    .pill:hover:not(:disabled) {
-        color: var(--maroon);
-        border-color: var(--maroon);
-        background: #fffdf6;
-    }
-    /* mustard fill, the same as a chosen feeling */
-    .pill.selected,
-    .pill.selected:hover {
-        background: var(--mustard);
-        border-color: var(--mustard);
-        color: var(--surface);
-    }
-    .pill:disabled { opacity: 0.5; cursor: default; }
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
 
     /* louder than the prose it heads because it is the reason to doubt it */
     .label {
@@ -409,9 +340,6 @@
         color: rgba(var(--ink), 0.45);
         text-wrap: pretty;
     }
-<<<<<<< HEAD
     /* scoped so it outranks .placeholder, which Svelte also scopes */
     .error { color: rgba(var(--red), 0.65); }
-=======
->>>>>>> b90a09e8e3c1287187510faf39de38285d904764
 </style>
