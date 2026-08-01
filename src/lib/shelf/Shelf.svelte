@@ -12,6 +12,7 @@
     } = $props();
 
     // an id with no current label is dropped rather than shown raw
+<<<<<<< HEAD
     // every kind is named rather than falling through
     // a kind that lands in the wrong lookup finds nothing and drops the chip silently
     function labelFor(origin: Origin, id: string): string | null {
@@ -19,6 +20,12 @@
         if (origin.kind === "aspect") return aspectLabel(id);
         if (origin.kind === "theme") return REMINDERS[id as ReminderTheme]?.label ?? null;
         return null;
+=======
+    function labelFor(origin: Origin, id: string): string | null {
+        if (origin.kind === "feeling") return FEELINGS[id as FeelingId] ?? null;
+        if (origin.kind === "aspect") return aspectLabel(id);
+        return REMINDERS[id as ReminderTheme]?.label ?? null;
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     }
 
     function wordsFor(usfm: string): string[] {

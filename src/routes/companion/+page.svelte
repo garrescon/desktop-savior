@@ -14,8 +14,13 @@
     } from "$lib/reading/plan";
     import type { ReminderTheme } from "$lib/reminder/themes";
     import {
+<<<<<<< HEAD
         dayKey, loadLog, saveLog,
         addVerses, progressFor, ring, CONNECT_GOAL, type DayLog,
+=======
+        dayKey, loadLog, saveLog, loadSettings, saveSettings, setPrayerGoal, setTradition,
+        addVerses, progressFor, ring, CONNECT_GOAL, type DayLog, type Tradition,
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     } from "$lib/day/progress";
     import {
         loadSettings, saveSettings, setPrayerGoal, setTradition, type Tradition,
@@ -33,7 +38,10 @@
     import SettingsPage from "$lib/settings/Settings.svelte";
     import Shelf from "$lib/shelf/Shelf.svelte";
     import Discover from "$lib/discover/Discover.svelte";
+<<<<<<< HEAD
     import Topics from "$lib/topics/Topics.svelte";
+=======
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     import Marks from "$lib/shell/Marks.svelte";
 
     type Tab = "day" | "book" | "settings";
@@ -186,7 +194,11 @@
         saveShelf(shelf);
     }
 
+<<<<<<< HEAD
     // re-reads first, this shelf has more than one writer
+=======
+    // re-reads first, same as every other shelf write — feelings shares this key
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
     function annotateKept(usfm: string, note: string) {
         shelf = annotate(loadShelf(), usfm, note);
         saveShelf(shelf);
@@ -330,6 +342,7 @@
           </section>
 
           <section class="section">
+<<<<<<< HEAD
             <span class="eyebrow">Read About</span>
 
             <Topics {plan} {books} onAdd={addBook} />
@@ -338,6 +351,10 @@
           <section class="section">
             <span class="eyebrow">go looking</span>
 
+=======
+            <span class="eyebrow">go looking</span>
+
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
             <Discover {books} book={plan.book} {reading} />
           </section>
 

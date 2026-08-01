@@ -4,7 +4,11 @@
     import Passages, { type Entry } from "$lib/shelf/Passages.svelte";
     import { loadShelf, saveShelf, keep, isKept } from "$lib/shelf/shelf";
     import { FEELINGS, FEELING_IDS, type FeelingId } from "./feelings";
+<<<<<<< HEAD
     import { loadSettings } from "$lib/settings/settings";
+=======
+    import { loadSettings } from "$lib/day/progress";
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
 
     // keep in sync with Guidance struct in src-tauri/src/gloo.rs
     interface Guidance { references: string[]; note: string; }
@@ -48,6 +52,10 @@
         const asked = [...selected];
         try {
             // the model is told the words and not the ids
+<<<<<<< HEAD
+=======
+            // the tradition is re-read because settings live in the other tab
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
             const guidance = await invoke<Guidance>("ask_gloo", {
                 feelings: asked.map((id) => FEELINGS[id]),
                 tradition: loadSettings().tradition,
@@ -96,7 +104,11 @@
     <div class="pill-wrap">
         {#each FEELING_IDS as id}
             <button
+<<<<<<< HEAD
                 class="pill"
+=======
+                class="pill feeling"
+>>>>>>> b90a09e8e3c1287187510faf39de38285d904764
                 class:selected={selected.includes(id)}
                 aria-pressed={selected.includes(id)}
                 onclick={() => toggleFeeling(id)}
