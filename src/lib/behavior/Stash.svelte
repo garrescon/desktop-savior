@@ -1,16 +1,25 @@
 <script lang="ts">
-    import { DEMO_MODE } from "$lib/dev";
+    import Sprite from "$lib/sprite/Sprite.svelte";
+    import type { Behavior } from "./types";
+    import { hitbox } from "$lib/stage/hitbox";
 
-    let { onRestore }: { onRestore: () => void } = $props();
+    let { behavior, onRestore }: {
+        behavior: Behavior | null;
+        onRestore: () => void;
+    } = $props();
 
     const HOLD_MS = 400;
 
-    const PEEK_MIN_MS = DEMO_MODE ? 5_000 : 30_000;
-    const PEEK_MAX_MS = DEMO_MODE ? 12_000 : 90_000;
-    const PEEK_LASTS_MS = 600;
-
     let holdTimer: ReturnType<typeof setTimeout> | undefined;
-    let peeking = $state(false);
+
+    // the sheet has no outro so He leans out once and stays leaning
+    let segment = $state<"intro" | "loop">("loop");
+    $effect(() => {
+        if (behavior?.intro) segment = "intro";
+    });
+    const tag = $derived(
+        segment === "intro" && behavior?.intro ? behavior.intro : behavior?.loop,
+    );
 
     function beginHold() {
         holdTimer = setTimeout(onRestore, HOLD_MS);
@@ -18,58 +27,45 @@
     function cancelHold() {
         clearTimeout(holdTimer);
     }
-
-    // randomized recurring lean-out
-    $effect(() => {
-        let waitId: ReturnType<typeof setTimeout>;
-        let retreatId: ReturnType<typeof setTimeout>;
-
-        function scheduleNext() {
-            const quiet = PEEK_MIN_MS + Math.random() * (PEEK_MAX_MS - PEEK_MIN_MS);
-            waitId = setTimeout(() => {
-                peeking = true;
-                retreatId = setTimeout(() => {
-                    peeking = false;
-                    scheduleNext();
-                }, PEEK_LASTS_MS);
-            }, quiet);
-        }
-
-        scheduleNext();
-        return () => {
-            clearTimeout(waitId);
-            clearTimeout(retreatId);
-        };
-    });
 </script>
 
 <!-- deliberately not a drag region. hold-to-restore -->
+<!-- the only clickable thing in the window while stashed, so without this rect
+     He could never be brought back -->
 <button
     class="stash"
+    use:hitbox
     onpointerdown={beginHold}
     onpointerup={cancelHold}
     onpointerleave={cancelHold}
     aria-label="Bring Him back"
 >
-    <div class="icon" class:peeking></div>
+    {#if behavior && tag}
+        <Sprite
+            src={behavior.src}
+            sheet={behavior.sheet}
+            {tag}
+            loop={segment === "loop"}
+            grabbable={false}
+            onComplete={() => (segment = "loop")}
+        />
+    {/if}
 </button>
 
 <style>
+    /* pinned rather than centred so a window taller than asked for cannot lift Him */
     .stash {
-        width: 100%;
-        height: 100%;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        display: block;
+        padding: 0;
+        line-height: 0;
         background: transparent;
         border: none;
         cursor: pointer;
-    }
-    .icon {
-        background: #444;
-        border-radius: 8px;
-        width: 100%;
-        height: 100%;
-        transition: transform 250ms ease;
-    }
-    .peeking {
-        transform: translateY(-10px) rotate(-6deg);
+        /* a sheet that failed to load still leaves something to grab */
+        min-width: 44px;
+        min-height: 44px;
     }
 </style>

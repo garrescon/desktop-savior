@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { AsepriteSheet, FrameTag } from './types';
+    import { hitbox } from "$lib/stage/hitbox";
 
     interface Props {
         src: string;
@@ -7,11 +8,12 @@
         tag: FrameTag;
         scale?: number;
         loop?: boolean;
-        flip?: boolean;
+        // off wherever a press means something other than moving the window
+        grabbable?: boolean;
         onComplete?: () => void;
     }
 
-    let { src, sheet, tag, scale = 4, loop = true, onComplete, flip = false }: Props = $props();
+    let { src, sheet, tag, scale = 4, loop = true, grabbable = true, onComplete }: Props = $props();
 
     let frameIndex = $state(0);
 
@@ -51,17 +53,20 @@
 </script>
 
 <div
-    data-tauri-drag-region
+    use:hitbox
+    data-tauri-drag-region={grabbable ? "" : undefined}
     style:width="{frame.w * scale}px"
     style:height="{frame.h * scale}px"
     style:background-image="url({src})"
     style:background-size="{sheet.meta.size.w * scale}px {sheet.meta.size.h * scale}px"
     style:background-position="{-frame.x * scale}px {-frame.y * scale}px"
-    style:transform="scaleX({flip ? -1 : 1})"
 ></div>
 
 <style>
+  /* His window's main is a flex column and a bubble above Him would shrink this box */
+  /* the clipped feet read as Him sinking through the floor */
   div {
+    flex-shrink: 0;
     background-repeat: no-repeat;
     image-rendering: pixelated;
   }

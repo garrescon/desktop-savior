@@ -1,55 +1,39 @@
 <script lang="ts">
     import type { Ring } from "./progress";
 
-    let { ring, onBegin }: {
+    let { ring, sitting, onBegin, onEnd }: {
         ring: Ring;             // seconds today against the daily goal
+        sitting: boolean;
         onBegin: () => void;
+        onEnd: () => void;
     } = $props();
 
     const goalMinutes = $derived(Math.round(ring.goal / 60));
-
-    const CONFIRM_MS = 4000;
-    let begunAt = $state(0);
-    const confirming = $derived(begunAt !== 0);
-
-    function begin() {
-        begunAt = Date.now();           // a new stamp re-arms the timer below
-        onBegin();
-    }
-
-    // clears itself
-    $effect(() => {
-        if (!begunAt) return;
-        const id = setTimeout(() => (begunAt = 0), CONFIRM_MS);
-        return () => clearTimeout(id);
-    });
 </script>
 
 <div class="pray">
     <div class="pray-head">
-        <div class="pray-goal">{goalMinutes} [minutes a day]</div>
-        <button class="pray-begin" onclick={begin}>
-            {confirming ? "[begun in His window]" : "[begin] →"}
+        <div class="pray-goal">{goalMinutes} minutes a day</div>
+        <button class="pray-begin" onclick={sitting ? onEnd : onBegin}>
+            {sitting ? "Finished" : "begin →"}
         </button>
     </div>
 
     <div class="meter"><div class="meter-fill" style="width: {ring.fraction * 100}%"></div></div>
 
     {#if ring.complete}
-        <p class="pray-note">[you sat the whole while today]</p>
+        <p class="pray-note">you sat the whole while today</p>
     {/if}
 </div>
 
 <style>
-    /* The gap above comes from .section's head rule and the one below the
-       control row from --row-gap */
+    /* the gap above comes from .section's head rule */
+    /* the one below the control row comes from --row-gap */
     .pray {
         padding-bottom: 20px;
     }
 
-    /* centered, not baseline-aligned 
-       Ghe display face has descenders that hang below the button's bottom
-       edge when the two are bottom-aligned */
+    /* the display face has descenders that hang below the button when bottom-aligned */
     .pray-head {
         display: flex;
         justify-content: space-between;

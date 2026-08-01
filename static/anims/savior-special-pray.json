@@ -1,52 +1,25 @@
 { "frames": [
    {
-    "filename": "Sprite-0001 0.",
+    "filename": "0",
     "frame": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 500
+    "duration": 1000
    },
    {
-    "filename": "Sprite-0001 1.",
+    "filename": "1",
     "frame": { "x": 24, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 750
+    "duration": 800
    },
    {
-    "filename": "Sprite-0001 2.",
+    "filename": "2",
     "frame": { "x": 48, "y": 0, "w": 24, "h": 24 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
-    "sourceSize": { "w": 24, "h": 24 },
-    "duration": 150
-   },
-   {
-    "filename": "Sprite-0001 3.",
-    "frame": { "x": 72, "y": 0, "w": 24, "h": 24 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
-    "sourceSize": { "w": 24, "h": 24 },
-    "duration": 150
-   },
-   {
-    "filename": "Sprite-0001 4.",
-    "frame": { "x": 96, "y": 0, "w": 24, "h": 24 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
-    "sourceSize": { "w": 24, "h": 24 },
-    "duration": 750
-   },
-   {
-    "filename": "Sprite-0001 5.",
-    "frame": { "x": 120, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
@@ -54,41 +27,89 @@
     "duration": 500
    },
    {
-    "filename": "Sprite-0001 6.",
+    "filename": "3",
+    "frame": { "x": 72, "y": 0, "w": 24, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
+    "duration": 800
+   },
+   {
+    "filename": "4",
+    "frame": { "x": 96, "y": 0, "w": 24, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
+    "duration": 800
+   },
+   {
+    "filename": "5",
+    "frame": { "x": 120, "y": 0, "w": 24, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
+    "duration": 1500
+   },
+   {
+    "filename": "6",
     "frame": { "x": 144, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 150
+    "duration": 1500
    },
    {
-    "filename": "Sprite-0001 7.",
+    "filename": "7",
     "frame": { "x": 168, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 150
+    "duration": 1500
    },
    {
-    "filename": "Sprite-0001 8.",
+    "filename": "8",
     "frame": { "x": 192, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 1000
+    "duration": 1300
+   },
+   {
+    "filename": "9",
+    "frame": { "x": 216, "y": 0, "w": 24, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
+    "duration": 1500
+   },
+   {
+    "filename": "10",
+    "frame": { "x": 240, "y": 0, "w": 24, "h": 24 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
+    "duration": 1
    }
  ],
  "meta": {
   "app": "https://www.aseprite.org/",
-  "version": "1.3.17.2-x64",
-  "image": "savior-oneshot-sneeze.png",
+  "version": "1.3.18.1-x64",
+  "image": "savior-special-pray.png",
   "format": "RGBA8888",
-  "size": { "w": 216, "h": 24 },
+  "size": { "w": 264, "h": 24 },
   "scale": "1",
   "frameTags": [
+   { "name": "Intro", "from": 0, "to": 4, "direction": "forward", "color": "#000000ff" },
+   { "name": "Loop", "from": 5, "to": 9, "direction": "forward", "color": "#000000ff" },
+   { "name": "Outro", "from": 10, "to": 10, "direction": "forward", "color": "#000000ff" }
   ]
  }
 }

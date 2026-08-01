@@ -1,4 +1,4 @@
-import { load, save, clamp, whole } from "$lib/store";
+import { load, save, whole } from "$lib/store";
 
 export interface DayProgress {
     verses: number;
@@ -7,17 +7,9 @@ export interface DayProgress {
 
 export type DayLog = Record<string, DayProgress>;
 
-// the Bible goal is plan.pace
-export interface Settings {
-    prayerMinutes: number;
-}
-
-export const MIN_PRAYER = 1, MAX_PRAYER = 120, DEFAULT_PRAYER = 10;
-
 export const CONNECT_GOAL = 1;
 
 const LOG_KEY = "desktop-savior:day:v1";
-const SETTINGS_KEY = "desktop-savior:settings:v1";
 
 // local calendar day
 export function dayKey(date = new Date()): string {
@@ -45,25 +37,6 @@ export function loadLog(): DayLog {
 
 export function saveLog(log: DayLog): void {
     save(LOG_KEY, log);
-}
-
-export function loadSettings(): Settings {
-    return load(SETTINGS_KEY, (raw) => {
-        const parsed = raw as Partial<Settings>;
-        return {
-            prayerMinutes: Number.isFinite(parsed?.prayerMinutes)
-                ? clamp(parsed!.prayerMinutes!, MIN_PRAYER, MAX_PRAYER)
-                : DEFAULT_PRAYER,
-        };
-    }, () => ({ prayerMinutes: DEFAULT_PRAYER }));
-}
-
-export function saveSettings(settings: Settings): void {
-    save(SETTINGS_KEY, settings);
-}
-
-export function setPrayerGoal(settings: Settings, delta: number): Settings {
-    return { ...settings, prayerMinutes: clamp(settings.prayerMinutes + delta, MIN_PRAYER, MAX_PRAYER) };
 }
 
 // missing days read as zeros
@@ -97,7 +70,7 @@ export interface Ring {
     complete: boolean;
 }
 
-// zero = unfinished
+// a goal of zero never reads as complete
 export function ring(done: number, goal: number): Ring {
     return {
         done,

@@ -118,6 +118,60 @@ body {
     padding: 18px 18px 17px;
 }
 
+/* --- the pill picker ---
+
+   Three surfaces ask a question with a row of rounded buttons: the feelings takeover, the
+   subjects in Read About, and the aspects in Go looking. One definition for all three. */
+
+.pill-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.pill {
+    flex: none;
+    font: 400 16px/1 var(--display);
+    color: var(--walnut);
+    background: var(--surface);
+    border: 1px solid rgba(var(--ink), 0.22);
+    border-radius: 999px;
+    padding: 10px 15px 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color var(--tick) ease, border-color var(--tick) ease, background-color var(--tick) ease;
+}
+.pill:hover:not(:disabled) {
+    color: var(--maroon);
+    border-color: var(--maroon);
+    background: #fffdf6;
+}
+/* mustard fill marks the one you picked, on all three surfaces */
+.pill.selected,
+.pill.selected:hover {
+    background: var(--mustard);
+    border-color: var(--mustard);
+    color: var(--surface);
+}
+.pill:disabled { opacity: 0.5; cursor: default; }
+
+/* --- keep / add: the quiet outlined action beside a passage --- */
+
+.keep {
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--maroon);
+    border: 1px solid var(--maroon);
+    font: 400 9.5px/1 var(--body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color var(--tick) ease;
+}
+.keep:hover:not(:disabled) { background: rgba(var(--red), 0.07); }
+/* reads as done rather than offering the same passage twice */
+.keep:disabled {
+    color: rgba(var(--ink), 0.38);
+    border-color: var(--hair-firm);
+    cursor: default;
+}
+
 /* --- focus ring for each --- */
 
 /* :where() keeps this at zero specificity, so any component that needs a

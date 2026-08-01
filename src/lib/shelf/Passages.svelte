@@ -1,19 +1,25 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import type { Passage } from "$lib/youversion/api";
+    import type { Keepable } from "./shelf";
 
-    export type Entry = Passage & { usfm: string };
+    export type Entry = Keepable;
 
-    let { entries, action }: {
+    let { entries, action, annotation, openFirst = false }: {
         entries: Entry[];
         action?: Snippet<[Entry]>;
+        // the caller owns everything inside, so this component holds no copy
+        annotation?: Snippet<[Entry]>;
+        openFirst?: boolean;
     } = $props();
 
     let opened = $state<string | null>(null);
 
-    // first verse is open
     const open = $derived(
-        entries.some((e) => e.usfm === opened) ? opened : entries[0]?.usfm ?? null,
+        entries.some((e) => e.usfm === opened)
+            ? opened
+            : openFirst
+              ? entries[0]?.usfm ?? null
+              : null,
     );
 </script>
 
@@ -24,23 +30,33 @@
                 <span class="verse-mark" aria-hidden="true">“</span>
                 <div class="verse-frame">
                     <p class="verse-text">{entry.text}</p>
-                    <div class="verse-ref">
+                    <!-- the citation doubles as the collapse control -->
+                    <!-- aria-expanded carries the state so neither button needs a label -->
+                    <button class="verse-ref" aria-expanded="true" onclick={() => (opened = null)}>
                         <span class="verse-rule" aria-hidden="true"></span>
                         <cite>{entry.reference}</cite>
-                    </div>
-                    <p class="verse-credit">{entry.versionTitle} · {entry.copyright}</p>
+                    </button>
+                    {#if annotation}
+                        <div class="verse-note">{@render annotation(entry)}</div>
+                    {/if}
                     {#if action}
                         <div class="verse-act">{@render action(entry)}</div>
                     {/if}
                 </div>
             </blockquote>
         {:else}
-            <button class="row" onclick={() => (opened = entry.usfm)}>
+            <button class="row" aria-expanded="false" onclick={() => (opened = entry.usfm)}>
                 <span class="row-caret" aria-hidden="true">›</span>
                 <span class="row-ref">{entry.reference}</span>
             </button>
         {/if}
     {/each}
+
+    <!-- one notice for the list because the license asks per page and not per verse -->
+    <!-- every entry carries the same version so the first one speaks for all of them -->
+    {#if entries.length}
+        <p class="credit">{entries[0].versionTitle} · {entries[0].copyright}</p>
+    {/if}
 </div>
 
 <style>
@@ -79,20 +95,31 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        cursor: pointer;
         font: 400 11px/1 var(--body);
         letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--maroon);
         font-variant-numeric: tabular-nums;
+        transition: opacity var(--tick) ease;
     }
+    .verse-ref:hover { opacity: 0.65; }
+    .verse-ref:focus-visible { outline: 1px solid var(--mustard); outline-offset: 3px; }
     /* <cite> is italic by default, the reference is set in caps */
     .verse-ref cite { font-style: normal; }
     .verse-rule { width: 18px; height: 1px; background: var(--maroon); }
-    .verse-credit {
-        margin: 8px 0 0;
+    .credit {
+        margin: 16px 0 0;
         font: 400 9.5px/1.5 var(--body);
         color: rgba(var(--ink), 0.42);
+        text-wrap: pretty;
     }
+    /* only the distance from the credit line, the rest is the caller's */
+    .verse-note { margin-top: 16px; }
+
     .verse-act {
         margin-top: 16px;
         padding-top: 13px;

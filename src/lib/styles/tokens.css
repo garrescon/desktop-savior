@@ -1,5 +1,5 @@
 :root {
-    /* -- PALLETE --
+    /* -- PALETTE --
        walnut = fill, glyphs, body text;
        mustard = rules and the small things;
        maroon = live things;
@@ -28,6 +28,10 @@
     --hair: rgba(78, 54, 41, 0.13);
     --hair-firm: rgba(78, 54, 41, 0.25);
     --hair-gold: rgba(140, 107, 47, 0.5);
+    /* the one hairline that has to be found rather than merely seen
+       0.6 measures 3.16:1 against --paper, clearing WCAG 1.4.11's 3:1 for non-text
+       do not soften this one to match the others */
+    --rule: rgba(78, 54, 41, 0.6);
 
     /* reading stepper & prayer button size */
     --ticker: 98px;

@@ -26,7 +26,11 @@ export interface Passage {
 
 let versionPromise: Promise<BibleVersion> | undefined;
 function getVersion(): Promise<BibleVersion> {
-    versionPromise ??= bible.getVersion(VERSION_ID);
+    if (!versionPromise) {
+        versionPromise = bible.getVersion(VERSION_ID);
+        // every passage awaits this, so a kept rejection breaks the whole session
+        versionPromise.catch(() => { versionPromise = undefined; });
+    }
     return versionPromise;
 }
 export async function getPassage(usfm: string): Promise<Passage> {
@@ -53,7 +57,6 @@ export function getBooks(): Promise<Book[]> {
         booksPromise = bible.getBooks(VERSION_ID).then((books) =>
             books.data.map((b) => ({ usfm: b.id, name: b.title })),
         );
-        // if it fails, wipe it to try again
         booksPromise.catch(() => { booksPromise = undefined; });
     }
     return booksPromise;
@@ -75,7 +78,6 @@ export function getChapterLengths(book: string): Promise<ChapterLength[]> {
                 verses: c.verses?.length ?? 0,
             })),
         );
-        // if it fails, wipe it to try again
         promise.catch(() => chapterPromises.delete(book));
         chapterPromises.set(book, promise);
     }

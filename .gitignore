@@ -9,7 +9,5 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-src-tauri/src/gloo_prompt.txt
 /.claude
-COPY.md
 src/routes/design

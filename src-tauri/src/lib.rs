@@ -1,10 +1,10 @@
 mod gloo;
+mod stage;
+mod tray;
 
-
-use tauri::{
-    menu::{Menu, MenuItem},
-    tray::TrayIconBuilder
-};
+// the window He lives in
+// the label stays "main" because that is what tauri.conf.json creates
+pub const SAVIOR: &str = "main";
 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,24 +20,28 @@ pub fn run() {
     }
 
     tauri::Builder::default()
+        // registered before setup, which is where the poll thread starts
+        .manage(stage::Stage::default())
+        .manage(tray::Tray::default())
         .setup(|app| {
-            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&quit])?;
-            TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
-                .tooltip("Desktop Savior")
-                .menu(&menu)
-                .show_menu_on_left_click(true)
-                .on_menu_event(|app, event| {
-                    if event.id.as_ref() == "quit" {
-                        app.exit(0);
-                    }
-                })
-                .build(app)?;
+            // the tray is the only way out of a click-through failure, so it is
+            // built before the poll thread starts and never depends on it
+            tray::build(app.handle())?;
+            tray::keep_companion_alive(app.handle());
+
+            stage::watch(app.handle().clone());
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_app_version, gloo::ask_gloo])
+        .invoke_handler(tauri::generate_handler![
+            get_app_version,
+            debug_log,
+            gloo::ask_gloo,
+            gloo::ask_topic,
+            gloo::ask_passage,
+            stage::set_hit_rects,
+            tray::set_savior_mode
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -45,5 +49,13 @@ pub fn run() {
 #[tauri::command]
 fn get_app_version(app: tauri::AppHandle) -> String {
     app.package_info().version.to_string()
+}
+
+/// Savior-window tracing, batched by dev.ts and printed where the dev server runs.
+#[tauri::command]
+fn debug_log(lines: Vec<String>) {
+    for line in lines {
+        eprintln!("[savior] {line}");
+    }
 }
 

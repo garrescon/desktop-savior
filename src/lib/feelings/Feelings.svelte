@@ -1,19 +1,19 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
-    import { getPassage } from "$lib/youversion/api";
+    import { getCachedPassage } from "$lib/youversion/cache";
     import Passages, { type Entry } from "$lib/shelf/Passages.svelte";
     import { loadShelf, saveShelf, keep, isKept } from "$lib/shelf/shelf";
+    import { FEELINGS, FEELING_IDS, type FeelingId } from "./feelings";
+    import { loadSettings } from "$lib/settings/settings";
 
     // keep in sync with Guidance struct in src-tauri/src/gloo.rs
     interface Guidance { references: string[]; note: string; }
 
-    const FEELINGS = [
-        "Peaceful", "Accomplished", "Loved",
-        "Unforgiving", "Lonely", "Unmotivated",
-    ];
-
     // this component is unmounted on exit so it clears
-    let selected = $state<string[]>([]);
+    let selected = $state<FeelingId[]>([]);
+
+    // what produced the results on screen because the pills stay live after an ask
+    let askedWith = $state<FeelingId[]>([]);
     let note = $state<string | null>(null);
     let entries = $state<Entry[]>([]);
     let asking = $state(false);
@@ -28,15 +28,15 @@
             : "How do you feel?",
     );
 
-    function toggleFeeling(feeling: string) {
+    function toggleFeeling(feeling: FeelingId) {
         selected = selected.includes(feeling)
             ? selected.filter((f) => f !== feeling)
             : [...selected, feeling];
     }
 
-    // re-reads first — the book tab writes this same shelf
+    // re-reads first, this shelf has more than one writer
     function keepIt(entry: Entry) {
-        shelf = keep(loadShelf(), entry.usfm, entry);
+        shelf = keep(loadShelf(), entry.usfm, entry, { kind: "feeling", ids: askedWith });
         saveShelf(shelf);
     }
 
@@ -45,14 +45,19 @@
         askError = null;
         note = null;
         entries = [];
+        const asked = [...selected];
         try {
-            const guidance = await invoke<Guidance>("ask_gloo", { feelings: selected });
+            // the model is told the words and not the ids
+            const guidance = await invoke<Guidance>("ask_gloo", {
+                feelings: asked.map((id) => FEELINGS[id]),
+                tradition: loadSettings().tradition,
+            });
 
-            // is_usfm checks a reference's shape, not that it exists, so a
-            // well-formed invention reaches YouVersion and 404s there. One of
-            // those shouldn't cost the references that did come back.
+            // verses_in checks a reference's shape, not that it exists, so a well-formed
+            // invention reaches YouVersion and 404s there
+            // one of those shouldn't cost the references that did come back
             const refs = guidance.references;
-            const results = await Promise.allSettled(refs.map(getPassage));
+            const results = await Promise.allSettled(refs.map(getCachedPassage));
 
             // allSettled preserves order, so the index still names the reference
             const found: Entry[] = [];
@@ -63,13 +68,15 @@
             const missing = results.length - found.length;
             if (missing) console.warn(`feelings: ${missing}/${results.length} references unavailable`);
 
-            // the note is written to sit beside scripture; with nothing beside
-            // it, it is the app speaking on its own
+            // a note with no scripture beside it is the app speaking on its own
             if (!found.length) throw new Error("no references resolved");
 
             entries = found;
             note = guidance.note;
+            askedWith = asked;
         } catch (err) {
+            // the raw answer is read here because askError below is only a flag
+            console.error("ask_gloo:", err);
             askError = err instanceof Error ? err.message : String(err);
         } finally {
             asking = false;
@@ -79,7 +86,7 @@
 
 {#snippet save(entry: Entry)}
     <button class="keep" onclick={() => keepIt(entry)} disabled={isKept(shelf, entry.usfm)}>
-        {isKept(shelf, entry.usfm) ? "[kept]" : "[keep this one]"}
+        {isKept(shelf, entry.usfm) ? "kept" : "keep this one"}
     </button>
 {/snippet}
 
@@ -87,14 +94,14 @@
     <p class="lede">{prompt}</p>
 
     <div class="pill-wrap">
-        {#each FEELINGS as feeling}
+        {#each FEELING_IDS as id}
             <button
-                class="pill feeling"
-                class:selected={selected.includes(feeling)}
-                aria-pressed={selected.includes(feeling)}
-                onclick={() => toggleFeeling(feeling)}
+                class="pill"
+                class:selected={selected.includes(id)}
+                aria-pressed={selected.includes(id)}
+                onclick={() => toggleFeeling(id)}
                 disabled={asking}
-            >{feeling}</button>
+            >{FEELINGS[id]}</button>
         {/each}
     </div>
 
@@ -108,9 +115,10 @@
 {/if}
 
 {#if entries.length}
-    <div class="gutter results"><Passages {entries} action={save} /></div>
+    <!-- the first result opens because it is the answer to the ask -->
+    <div class="gutter results"><Passages {entries} action={save} openFirst /></div>
 {:else if asking}
-    <p class="placeholder">Finding verses…</p>
+    <p class="placeholder">Looking</p>
 {:else if askError}
     <p class="placeholder error">Couldn't reach the library, try again later.</p>
 {:else}
@@ -118,49 +126,16 @@
 {/if}
 
 <style>
-    /* Direct children of the companion's .body, a column flex container. That
-       component's own `.body > * { flex-shrink: 0 }` is Svelte-scoped and never
-       reaches a child component's roots, so without this they shrink below
-       their content. */
+    /* direct children of the companion's .body, a column flex container
+       that component's own `.body > * { flex-shrink: 0 }` is Svelte-scoped and never
+       reaches a child component's roots, so without this they shrink below their content */
     .gutter, .note, .placeholder { flex-shrink: 0; }
 
     .gutter { padding: 0 var(--pad); }
     .results { padding-bottom: 24px; }
 
-    /* feeling button */
-    .pill {
-        flex: none;
-        font: 400 16px/1 var(--display);
-        color: var(--walnut);
-        background: var(--surface);
-        border: 1px solid rgba(var(--gold), 0.55);
-        border-radius: 999px;
-        padding: 8px 14px 9px;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: color var(--tick) ease, border-color var(--tick) ease, background-color var(--tick) ease;
-    }
-    .pill:hover:not(:disabled) {
-        color: var(--maroon);
-        border-color: var(--maroon);
-        background: #fffdf6;
-    }
+    /* .pill and .pill-wrap are in companion.css */
 
-    .pill-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
-    .feeling {
-        padding: 10px 15px 11px;
-        border-color: rgba(var(--ink), 0.22);
-    }
-    /* mustard button fill */
-    .feeling.selected,
-    .feeling.selected:hover {
-        background: var(--mustard);
-        border-color: var(--mustard);
-        color: var(--surface);
-    }
-    .feeling:disabled { opacity: 0.5; cursor: default; }
-
-    /* the full-width action */
     .ask {
         width: 100%;
         margin-top: 16px;
@@ -181,24 +156,7 @@
         cursor: default;
     }
 
-    /* reads as done rather than offering the same passage twice */
-    .keep {
-        padding: 8px 12px;
-        background: transparent;
-        color: var(--maroon);
-        border: 1px solid var(--maroon);
-        font: 400 9.5px/1 var(--body);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: background-color var(--tick) ease;
-    }
-    .keep:hover:not(:disabled) { background: rgba(var(--red), 0.07); }
-    .keep:disabled {
-        color: rgba(var(--ink), 0.38);
-        border-color: var(--hair-firm);
-        cursor: default;
-    }
+    /* .keep is in companion.css */
 
     /* -- running copy -- */
     .lede {
@@ -207,7 +165,6 @@
         color: rgba(var(--ink), 0.7);
         text-wrap: pretty;
     }
-    /* gloo's note */
     .note {
         margin: 20px var(--pad) 0;
         font: italic 400 13.5px/1.6 var(--body);
@@ -222,5 +179,6 @@
         text-align: center;
         text-wrap: pretty;
     }
+    /* scoped so it outranks .placeholder, which Svelte also scopes */
     .error { color: rgba(var(--red), 0.65); }
 </style>

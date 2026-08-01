@@ -771,6 +771,7 @@ dependencies = [
 name = "desktop-savior"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "dotenvy",
  "rand",
  "reqwest",
